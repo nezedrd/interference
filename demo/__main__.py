@@ -1,11 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from .math import Values as V
+from .data import DataGenerator as DG
 
 if __name__=='__main__':
-    xr = np.arange(-100000,100000,100)
-    D = V.get_screen_distance()
-    y = D
-    data = np.ones((300,1))*V.get_intensity_1d(xr,y).reshape(1,-1)
-    plt.imshow(data, interpolation='nearest', cmap=plt.get_cmap('Greys'))
+    fig,ax = plt.subplots()
+    DG.plot_space(ax)
+    DG.plot_screen(ax)
+    ax.set_ybound(lower=0)
     plt.show()
