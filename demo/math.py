@@ -46,7 +46,7 @@ class Values:
 
     @classmethod
     def set_wavelength(cls,value):
-        assert(value >= 400 and value < 800)
+        assert(value >= 400 and value < 700)
         cls.__wl = value
 
     """
