@@ -3,10 +3,11 @@ import numpy as np
 class Values:
     __wl = 532        #.10e-6m  # Wavelength in nanometers
     __c  = 299.792458 #.10e6m/s # Speed of light
-    __d  = 100        #.10e-6m  # Distance between both sources in nanometers
+    __d  = 15E3       #.10e-6m  # Distance between both sources in nanometers (15mm)
     __D  = 30E4       #.10e-6m  # Distance to the screen in nanometers (30cm)
     __D_og = 'cm'     #
     __D_og_choices = {'cm': 1e4, 'nm': 1}
+    __pi = np.pi
 
     """
     d is the distance between coherent sources
@@ -97,6 +98,52 @@ class Values:
         y = np.copy(yr).reshape(1,-1)
         return cls.get_left_distance(np.ones(y.shape)*x,
                 np.ones(x.shape)*y)
+
+    @classmethod
+    def get_right_distance(cls,x,y):
+        return np.sqrt(np.square(x-cls.__d)+np.square(y))
+
+    @classmethod
+    def get_right_distance_1d(cls,xr,y):
+        yr = y*np.ones(xr.shape)
+        return cls.get_right_distance(xr,yr)
+
+    @classmethod
+    def get_right_distance_2d(cls,xr,yr):
+        x = np.copy(xr).reshape(-1,1)
+        y = np.copy(yr).reshape(1,-1)
+        return cls.get_right_distance(np.ones(y.shape)*x,
+                np.ones(x.shape)*y)
+
+    @classmethod
+    def get_phase(cls,x,y):
+        return cls.get_right_distance(x,y) \
+            - cls.get_left_distance(x,y)
+
+    @classmethod
+    def get_phase_1d(cls,xr,y):
+        return cls.get_right_distance_1d(xr,y) \
+            - cls.get_left_distance_1d(xr,y)
+
+    @classmethod
+    def get_phase_2d(cls,xr,yr):
+        return cls.get_right_distance_2d(xr,yr) \
+            - cls.get_left_distance_2d(xr,yr)
+
+    @classmethod
+    def get_intensity(cls,x,y):
+        p = cls.get_phase(x,y)
+        return 4*np.square(np.cos(cls.__pi*p/cls.__wl))
+
+    @classmethod
+    def get_intensity_1d(cls,xr,y):
+        p = cls.get_phase_1d(xr,y)
+        return 4*np.square(np.cos(cls.__pi*p/cls.__wl))
+
+    @classmethod
+    def get_intensity_2d(cls,xr,yr):
+        p = cls.get_phase_2d(xr,yr)
+        return 4*np.square(np.cos(cls.__pi*p/cls.__wl))
 
 if __name__=='__main__':
     xr = np.arange(-110,-80,10).reshape(-1,1)
