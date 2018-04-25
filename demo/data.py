@@ -29,6 +29,17 @@ class DataGenerator:
         return cls.__cmap
 
     @classmethod
+    def get_screen(cls,**kwargs):
+        extent = kwargs['extent']
+        cols   = kwargs['cols']
+        rows   = kwargs['rows']
+        xr = np.linspace(extent[0], extent[1], num = cols)
+        y = extent[2]
+        data = np.ones((rows,1))*V.get_intensity_1d(xr,y).reshape(1,-1)
+        return data
+
+    """
+    @classmethod
     def plot_screen(cls,ax=plt):
         xr = np.linspace(cls.__screen_left,
                 cls.__screen_right,
@@ -40,7 +51,19 @@ class DataGenerator:
         return ax.imshow(data, interpolation='nearest', cmap=cls.get_cmap(),
                 extent=(cls.__screen_left,cls.__screen_right,y,y+cls.__screen_y),
                 origin='lower')
+    """
 
+    @classmethod
+    def get_space(cls,**kwargs):
+        extent = kwargs['extent']
+        cols   = kwargs['cols']
+        rows   = kwargs['rows']
+        xr = np.linspace(extent[0], extent[1], num = cols)
+        yr = np.linspace(extent[2], extent[3], num = rows)
+        data = np.transpose(V.get_intensity_2d(xr,yr))
+        return data
+
+    """
     @classmethod
     def plot_space(cls,ax,x_px,y_px):
         xr = np.linspace(cls.__screen_left,
@@ -72,6 +95,7 @@ class DataGenerator:
         y = V.get_screen_distance()*.9
         y_px = y*x_px/cls.__screen_y
         return cls.plot_space(ax,x_px,y_px)
+    """
 
 if __name__=='__main__':
     print(DataGenerator.get_cmap())
