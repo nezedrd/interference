@@ -46,9 +46,14 @@ class DataGenerator:
         extent = kwargs['extent']
         cols   = kwargs['cols']
         rows   = kwargs['rows']
+        middle = kwargs.get('middle',0)
         xr = np.linspace(extent[0], extent[1], num = cols)
         y = extent[2]
         data = np.ones((rows,1))*V.get_intensity_1d(xr,y).reshape(1,-1)
+        if middle:
+            p = np.abs(V.get_phase_1d(xr,y))
+            middle_pos = xr[np.argmin(p)]
+            return data,middle_pos
         return data
 
     """

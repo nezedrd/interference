@@ -180,23 +180,27 @@ class Settings:
     @classmethod
     def get_screen_parameters(cls,**kwargs):
         ratio = kwargs.get('ratio',1)
+        middle = kwargs.get('middle',0)
         extent = (cls.__min_x*ratio,
                 cls.__max_x*ratio,
                 cls.__y,
                 cls.__y + cls.__add_y)
         cols = cls.__hd_w*ratio
         rows = 2
-        return { 'extent': extent, 'cols': cols, 'rows': rows }
+        return { 'extent': extent, 'cols': cols, 'rows': rows, 'middle': middle }
 
     @classmethod
     def get_screen(cls,**kwargs):
+        middle = kwargs.get('middle',0)
         param = cls.get_screen_parameters(**kwargs)
         imparam = cls.get_imshow_parameters()
         imparam['extent'] = param['extent']
+        if middle:
+            return (*DG.get_screen(**param)),imparam
         return DG.get_screen(**param),imparam
 
-__slider_h = 0.02
-__slider_ih= 0.01
+__slider_h = 0.015
+__slider_ih= 0.008
 __slider_l = 0.37
 __slider_r = 0.15
 __slider_y = 0.99
@@ -216,6 +220,7 @@ def main():
     tk1 = tkr.FuncFormatter(lambda x,pos: '{0:.2f} cm'.format(x/1e4))
     ax1.tick_params(bottom=True,left=True,labelleft=True)
     ax1.set_frame_on(False)
+    ax2.tick_params(bottom=True,top=True)
     srcs = [None,None,None,None]
 
     def get_src():
@@ -241,9 +246,11 @@ def main():
     draw_main()
 
     def draw_screen():
-        screen,screen_param = Settings.get_screen(ratio=2*(w-space_w))
+        screen,middle_pos,screen_param = Settings.get_screen(ratio=2*(w-space_w),middle=1)
         ax2.cla()
         ax2.imshow(screen,**screen_param)
+        ax2.set_xticks([0,middle_pos])
+        ax2.axvline(middle_pos,color='w',linestyle='--')
         ax2.set_aspect(aspect='auto')
     draw_screen()
 
@@ -257,7 +264,7 @@ def main():
     draw_space()
 
     axwl = new_slider(fig)#fig.add_axes([0.4,0.9,0.45,0.02]) # [ x, y, w, h ]
-    slwl = Slider(axwl, 'Wavelength', 400, 690, valinit=V.get_wavelength())
+    slwl = Slider(axwl, 'Wavelength (nm)', 400, 690, valinit=V.get_wavelength())
     def upwl(val):
         V.set_wavelength(val)
         DG.reset_cmap()
@@ -268,8 +275,20 @@ def main():
         fig.canvas.draw()
     slwl.on_changed(upwl)
 
+    axdp = new_slider(fig)
+    # sldp = Slider(axdp, 'Phase', -Settings.get_max_d_mm(), Settings.get_max_d_mm(), valinit=V.get_phase_diff_mm())
+    sldp = Slider(axdp, 'Phase delay (nm)', -690, 690, valinit=V.get_phase_diff())
+    def updp(val):
+        # V.set_phase_diff_mm(val)
+        V.set_phase_diff(val)
+        draw_main()
+        draw_screen()
+        draw_space()
+        fig.canvas.draw()
+    sldp.on_changed(updp)
+
     axsd = new_slider(fig)#fig.add_axes([0.4,0.93,0.45,0.02])
-    slsd = Slider(axsd, 'Screen distance', Settings.get_min_y_cm(),
+    slsd = Slider(axsd, 'Screen distance (cm)', Settings.get_min_y_cm(),
             Settings.get_max_y_cm(), valinit=Settings.get_y_cm())
     def upsd(val):
         Settings.set_y_cm(val)
@@ -279,7 +298,7 @@ def main():
     slsd.on_changed(upsd)
 
     axid = new_slider(fig)#fig.add_axes([0.4,0.96,0.45,0.02])
-    slid = Slider(axid, 'Inter source distance', Settings.get_min_d_mm(),
+    slid = Slider(axid, 'Intersource distance (mm)', Settings.get_min_d_mm(),
             Settings.get_max_d_mm(), valinit=Settings.get_d_mm())
     def upid(val):
         Settings.set_d_mm(val)

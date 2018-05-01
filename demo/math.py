@@ -5,9 +5,26 @@ class Values:
     __c  = 299.792458 #.10e6m/s # Speed of light
     __d  = 15E3       #.10e-6m  # Distance between both sources in nanometers (15mm)
     __D  = 30E4       #.10e-6m  # Distance to the screen in nanometers (30cm)
+    __p  = 0
     __D_og = 'cm'     #
     __D_og_choices = {'cm': 1e4, 'nm': 1}
     __pi = np.pi
+
+    """
+    p is the phase difference (in nanometers)
+    """
+    @classmethod
+    def get_phase_diff(cls):
+        return cls.__p
+    @classmethod
+    def set_phase_diff(cls,p):
+        cls.__p = p
+    @classmethod
+    def get_phase_diff_mm(cls):
+        return cls.__p/1e3
+    @classmethod
+    def set_phase_diff_mm(cls,p):
+        cls.__p = p*1e3
 
     """
     d is the distance between coherent sources
@@ -100,7 +117,7 @@ class Values:
 
     @classmethod
     def get_right_distance(cls,x,y):
-        return np.sqrt(np.square(x-cls.__d)+np.square(y))
+        return np.sqrt(np.square(x-cls.__d)+np.square(y)) + cls.__p
 
     @classmethod
     def get_right_distance_1d(cls,xr,y):
