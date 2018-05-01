@@ -65,9 +65,29 @@ class Settings:
     __min_d =    100 # 100 nm
     __max_d =   30e3 #  30 mm
     __d     = V.get_inter_source_distance()
+    __src1  = None
+    __src2  = None
+    __src3  = None
+    __src4  = None
     __ref_d =   15e3
     __hd_w = 1024
     __ld_w = 128
+
+    @classmethod
+    def get_src(cls):
+        if cls.__src1 is None:
+            cls.set_src()
+        return cls.__src1,cls.__src2,cls.__src3,cls.__src4
+    @classmethod
+    def set_src(cls):
+        p = { 'color': DG.get_color(),
+                'ec': 'w',
+                'radius': (cls.__max_x - cls.__min_x)/80 }
+        cls.__src1 = plt.Circle((-cls.__d,0), **p)
+        cls.__src2 = plt.Circle((+cls.__d,0), **p)
+        p['radius']/=5
+        cls.__src3 = plt.Circle((-cls.__d,0), **p)
+        cls.__src4 = plt.Circle((+cls.__d,0), **p)
 
     @classmethod
     def get_min_x(cls):
@@ -119,6 +139,7 @@ class Settings:
     def set_d_mm(cls,d):
         cls.__d = min(cls.__max_d,max(cls.__min_d,d*1e3))
         V.set_inter_source_distance(cls.__d)
+        cls.set_src()
 
     @classmethod
     def get_space_parameters(cls):
@@ -195,6 +216,12 @@ def main():
     tk1 = tkr.FuncFormatter(lambda x,pos: '{0:.2f} cm'.format(x/1e4))
     ax1.tick_params(bottom=True,left=True,labelleft=True)
     ax1.set_frame_on(False)
+    srcs = [None,None,None,None]
+
+    def get_src():
+        Settings.set_src()
+        srcs[:] = Settings.get_src()
+    get_src()
 
     def draw_main():
         space,space_param = Settings.get_space()
@@ -202,6 +229,8 @@ def main():
         ax1.cla()
         ax1.imshow(screen,**screen_param)
         ax1.imshow(space,**space_param)
+        ax1.add_artist(srcs[0])
+        ax1.add_artist(srcs[1])
         ax1.set_aspect(aspect='equal',anchor='S')
         ax1.set_xlim(left=Settings.get_min_x(), right=Settings.get_max_x())
         ax1.set_ylim(bottom=Settings.get_min_y(), top=Settings.get_max_y()+Settings.get_add_y())
@@ -213,14 +242,18 @@ def main():
 
     def draw_screen():
         screen,screen_param = Settings.get_screen(ratio=2*(w-space_w))
+        ax2.cla()
         ax2.imshow(screen,**screen_param)
         ax2.set_aspect(aspect='auto')
     draw_screen()
 
     def draw_space():
         space,space_param = Settings.get_zoombox(ratio=(h-1)/(w-space_w))
-        ax3.set_aspect(aspect='equal',anchor='S')
+        ax3.cla()
         ax3.imshow(space,**space_param)
+        ax3.add_artist(srcs[2])
+        ax3.add_artist(srcs[3])
+        ax3.set_aspect(aspect='equal',anchor='S')
     draw_space()
 
     axwl = new_slider(fig)#fig.add_axes([0.4,0.9,0.45,0.02]) # [ x, y, w, h ]
@@ -228,6 +261,7 @@ def main():
     def upwl(val):
         V.set_wavelength(val)
         DG.reset_cmap()
+        get_src()
         draw_main()
         draw_screen()
         draw_space()
@@ -249,6 +283,7 @@ def main():
             Settings.get_max_d_mm(), valinit=Settings.get_d_mm())
     def upid(val):
         Settings.set_d_mm(val)
+        get_src()
         draw_main()
         draw_screen()
         draw_space()

@@ -15,13 +15,15 @@ class DataGenerator:
 
     __spectre = plt.get_cmap('nipy_spectral')
     __cmap = None
+    __color = None
 
     @classmethod
     def get_cmap(cls):
         if cls.__cmap is None:
             l = (V.get_wavelength()-400.)/300.
             res = 2
-            ref_color = [cls.__spectre(l)]*res
+            cls.__color = cls.__spectre(l)
+            ref_color = [cls.__color]*res
             smooth = np.linspace(0.,1.,res)
             smooth = np.array([smooth,smooth,smooth,np.ones(res,dtype=float)]).transpose()
             colors = ref_color*smooth
@@ -29,8 +31,15 @@ class DataGenerator:
         return cls.__cmap
 
     @classmethod
+    def get_color(cls):
+        if cls.__color is None:
+            cls.get_cmap()
+        return cls.__color
+
+    @classmethod
     def reset_cmap(cls):
         cls.__cmap = None
+        cls.__color = None
 
     @classmethod
     def get_screen(cls,**kwargs):
