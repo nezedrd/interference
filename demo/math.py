@@ -26,7 +26,6 @@ class Values:
 
     @classmethod
     def set_inter_source_distance(cls,value):
-        assert(value > 50 and value < 1000)
         cls.__d = value
 
     """

@@ -29,6 +29,10 @@ class DataGenerator:
         return cls.__cmap
 
     @classmethod
+    def reset_cmap(cls):
+        cls.__cmap = None
+
+    @classmethod
     def get_screen(cls,**kwargs):
         extent = kwargs['extent']
         cols   = kwargs['cols']
