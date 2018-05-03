@@ -1,5 +1,8 @@
 import numpy as np
+import logging,functools#,itertools
 from matplotlib import pyplot as plt
+from matplotlib import ticker as tkr
+logging.basicConfig(level=logging.INFO)
 
 """
 DefaultObject
@@ -33,8 +36,8 @@ class YoungConfig(DefaultObject):
             'wl_min': 400, 'wl_max': 700, 'wl': 532,
             'd_min': 0, 'd_max': 20e3, 'd': 10e3,
             'p_min': -700, 'p_max': 700, 'p': 0,
-            'x_min': -20e7, 'x_max': 20e7, 'x': 0,
-            'y_min': 0, 'y_max': 30e7, 'y': 30e7,
+            'x_min': -20e7, 'x_max': 20e7, 'x': 0, 'x_ratio': 4,
+            'y_min': 0, 'y_max': 30e7, 'y': 30e7, 'y_screen': 1e7,
             'res': 4096, # Number of pixels for the whole width
         }
 
@@ -129,6 +132,12 @@ class YoungConfig(DefaultObject):
     def x(self,v):
         self.__x = int(max(self.x_min,min(v,self.x_max)))
     @property
+    def x_ratio(self):
+        return self.__xr
+    @x_ratio.setter
+    def x_ratio(self,v):
+        self.__xr = int(max(1,v))
+    @property
     def y_min(self):
         return self.__ym
     @y_min.setter
@@ -146,6 +155,12 @@ class YoungConfig(DefaultObject):
     @y.setter
     def y(self,v):
         self.__y = int(max(self.y_min,min(v,self.y_max)))
+    @property
+    def y_screen(self):
+        return self.__ys
+    @y_screen.setter
+    def y_screen(self,v):
+        self.__ys = int(max(1,v))
 
     # Resolution
     @property
@@ -174,22 +189,24 @@ class YoungConfig(DefaultObject):
         YoungConfig.__id += 1
         self.__id = YoungConfig.__id
         # Settings
-        self.wl_min = config['wl_min']
-        self.wl_max = config['wl_max']
-        self.wl     = config['wl']
-        self.d_min  = config['d_min']
-        self.d_max  = config['d_max']
-        self.d      = config['d']
-        self.p_min  = config['p_min']
-        self.p_max  = config['p_max']
-        self.p      = config['p']
-        self.x_min  = config['x_min']
-        self.x_max  = config['x_max']
-        self.x      = config['x']
-        self.res    = config['res']
-        self.y_min  = config['y_min']
-        self.y_max  = config['y_max']
-        self.y      = config['y']
+        self.wl_min   = config['wl_min']
+        self.wl_max   = config['wl_max']
+        self.wl       = config['wl']
+        self.d_min    = config['d_min']
+        self.d_max    = config['d_max']
+        self.d        = config['d']
+        self.p_min    = config['p_min']
+        self.p_max    = config['p_max']
+        self.p        = config['p']
+        self.x_min    = config['x_min']
+        self.x_max    = config['x_max']
+        self.x        = config['x']
+        self.x_ratio  = config['x_ratio']
+        self.res      = config['res']
+        self.y_min    = config['y_min']
+        self.y_max    = config['y_max']
+        self.y        = config['y']
+        self.y_screen = config['y_screen']
 
     """
     To string
@@ -215,6 +232,32 @@ Numpy approximate index of
 """
 def a_indexof(array,value):
     return np.argmin(np.abs(array-value))
+
+"""
+Arguments for extent
+"""
+def parse_args(**kwargs):
+    keys = kwargs['keys']
+    deft = kwargs.get('defaults',dict())
+    args = kwargs['args']
+    dest = kwargs.get('dest',dict())
+    for k,v in keys.items():
+        dest[k] = functools.reduce(
+                lambda x,y: args.get(y,x),
+                reversed(v+[deft.get(k,None)])
+                )
+    return dest
+def get_extent(d,*args,**kwargs):
+    kwargs.update(enumerate(kwargs.get('extent',())))
+    kwargs.update(enumerate(args))
+    e = dict()
+    a = {
+      'left': [0,'l','left'],
+      'right': [1,'r','right'],
+      'bottom': [2,'b','bottom'],
+      'top': [3,'t','top'],
+      }
+    return parse_args(keys=a,defaults=d,args=kwargs,dest=e)
 
 """
 Extract keyword arguments
@@ -303,6 +346,34 @@ class YoungInterference(YoungConfig):
             s.setflags(write=0)
             self.__s = s
         return s
+    """
+    get_intensity(left,right,bottom,top)
+    get_intensity(extent=(l,r,b,t))
+    get_intensity(left=..., right=..., b=..., t=...)
+    """
+    def get_intensity(self,*args,**kwargs):
+        # Get parameters and data
+        d = {
+                'left': self.x_min,
+                'right': self.x_max,
+                'bottom': self.y_min,
+                'top': self.y
+            }
+        e = get_extent(d,*args,**kwargs)
+        s = self.intensity
+        # Get indices for view, and real extent
+        xr = self.xrange
+        li = a_indexof(xr,e['left'])
+        l  = xr[li]
+        ri = a_indexof(xr,e['right'])
+        r  = xr[ri]
+        yr = self.yrange
+        bi = a_indexof(yr,e['bottom'])
+        b  = yr[bi]
+        ti = a_indexof(yr,e['top'])
+        t  = yr[ti]
+        # Return correct view and extent
+        return s[bi:ti+1,li:ri+1],(l,r,b,t)
 
     """
     Extracting screen
@@ -312,6 +383,27 @@ class YoungInterference(YoungConfig):
         s = self.intensity
         i = a_indexof(self.yrange,self.y)
         return s[i:i+1,:]
+    def get_projection(self,*args,**kwargs):
+        # Get parameters and data
+        d = {
+                'left': self.x_min,
+                'right': self.x_max,
+                'bottom': self.y,
+                'top': self.y+self.y_screen,
+            }
+        e = get_extent(d,*args,**kwargs)
+        s = self.intensity
+        # Get indices for view, and real extent
+        xr = self.xrange
+        li = a_indexof(xr,e['left'])
+        l  = xr[li]
+        ri = a_indexof(xr,e['right'])
+        r  = xr[ri]
+        yr = self.yrange
+        bi = a_indexof(yr,e['bottom'])
+        b  = yr[bi]
+        t  = e['top']-e['bottom']+b
+        return s[bi:bi+1,li:ri+1],(l,r,b,t)
 
     """
     Interference part needs no initialization
@@ -361,6 +453,42 @@ class YoungDemo(YoungInterference):
         return f
 
     """
+    Axes config
+    """
+    def config_ax(self,*axs):
+        for ax in axs:
+            ax.tick_params(
+                    left=0,right=0,bottom=0,top=0,
+                    labelleft=0,labelright=0,labelbottom=0,labeltop=0,
+                    direction='out',length=3,
+                    )
+    def config_axc(self,ax=None):
+        a = self.__axc
+        if a is None:
+            self.config_ax(ax)
+            ax.tick_params(bottom=1,left=1,labelleft=1)
+            ax.set_frame_on(0)
+            ax.set_aspect(aspect='equal',anchor='S')
+            return
+        tk = tkr.FuncFormatter(lambda x,pos: '{0:.2f} cm'.format(x/1e7))
+        a.set_xticks([-self.d,self.d])
+        a.set_yticks([self.y])
+        a.yaxis.set_major_formatter(tk)
+        a.set_xlim(left=int(self.x_min/self.x_ratio),
+                right=int(self.x_max/self.x_ratio))
+        a.set_ylim(bottom=self.y_min,top=self.y_max+self.y_screen)
+    def config_axs(self,ax=None):
+        a = self.__axs
+        if a is None:
+            self.config_ax(ax)
+            return
+    def config_axz(self,ax=None):
+        a = self.__axz
+        if a is None:
+            self.config_ax(ax)
+            return
+
+    """
     Axes
     """
     @property
@@ -369,6 +497,7 @@ class YoungDemo(YoungInterference):
         if a is None:
             a = plt.subplot2grid((self.h,self.w), (0,0),
                     colspan=self.cw, rowspan=self.h, fig=self.fig)
+            self.config_axc(a)
             self.__axc = a
         return a
     @property
@@ -377,6 +506,7 @@ class YoungDemo(YoungInterference):
         if a is None:
             a = plt.subplot2grid((self.h,self.w), (0,self.cw),
                     colspan=self.w-self.cw, rowspan=1, fig=self.fig)
+            self.config_axs(a)
             self.__axs = a
         return a
     @property
@@ -385,8 +515,25 @@ class YoungDemo(YoungInterference):
         if a is None:
             a = plt.subplot2grid((self.h,self.w), (1,self.cw),
                     colspan=self.w-self.cw, rowspan=self.h-1, fig=self.fig)
+            self.config_axz(a)
             self.__axz = a
         return a
+
+    """
+    Images config
+    """
+    @property
+    def im_cfg(self):
+        c = self.__imcfg
+        if c is None:
+            logging.warning('TODO: Get cmap')
+            c = {
+                    'interpolation': 'nearest',
+                    'cmap': plt.get_cmap('Greys'),
+                    'origin': 'lower',
+                }
+            self.__imcfg = c
+        return c
 
     """
     Draw
@@ -395,10 +542,25 @@ class YoungDemo(YoungInterference):
         self.__fig_cfg = kwargs_figure(**kwargs)
     def figure(self):
         fig = self.fig
-        axc = self.ax_complete
-        axs = self.ax_screen
-        axz = self.ax_zoom
+        self.draw_axc()
+        self.draw_axs()
+        self.draw_axz()
         return fig
+    def draw_axc(self):
+        axc = self.ax_complete
+        # axc.cla()
+        l = int(self.x_min/self.x_ratio)
+        r = int(self.x_max/self.x_ratio)
+        im,ex = self.get_intensity(left=l,right=r)
+        axc.imshow(im,extent=ex,**self.im_cfg)
+        im,ex = self.get_projection(left=l,right=r)
+        axc.imshow(im,extent=ex,**self.im_cfg)
+        axc.axhline(self.y,color='w',linestyle='-')
+        self.config_axc()
+    def draw_axs(self):
+        pass
+    def draw_axz(self):
+        pass
 
     """
     Initialization
@@ -415,7 +577,8 @@ class YoungDemo(YoungInterference):
 
 if __name__=='__main__':
     yc = YoungDemo()
-    yc.figure_config(wonderful=True,facecolor='g')
+    # yc.y = yc.y_max/2
+    # yc.figure_config(wonderful=True,facecolor='g')
     fig = yc.figure()
     fig.savefig('/home/neze/Desktop/try.png')
     plt.show()
