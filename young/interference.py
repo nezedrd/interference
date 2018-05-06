@@ -1,31 +1,7 @@
-import numpy as np
-import logging,functools#,itertools
-from matplotlib import pyplot as plt
-from matplotlib import ticker as tkr
-logging.basicConfig(level=logging.INFO)
-
-"""
-DefaultObject
-"""
-class DefaultObject(object):
-    def __getattr__(self,name):
-        return None
-
-"""
-Unit formater
-"""
-def u_format(*args,fs='{:4d}'):
-    units = { 1: 'nm', 1e3: 'μm', 1e6: 'mm', 1e7: 'cm' }
-    steps = units.keys()
-    a = np.array(args,dtype=int)
-    for c in reversed(sorted(steps)):
-        x = a/c
-        y = x.astype(int)
-        if (y == x).all():
-            f = fs+units[c]
-            ret = [ f.format(Y) for Y in y ]
-            return (*ret,)
-    return None
+from numpy import abs,linspace,square,ones,sqrt,cos,pi
+from logging import getLogger
+from .tools import log_test,DefaultObject,unit_format,get_extent,array_indexof
+logger = getLogger(__name__)
 
 """
 Complete configuration
@@ -215,67 +191,17 @@ class YoungConfig(DefaultObject):
         return "YoungConfig{:d}".format(self.__id)
     def __str__(self):
         res = [repr(self)]
-        wlm,wl,wlM, = u_format(self.wl_min,self.wl,self.wl_max)
+        wlm,wl,wlM, = unit_format(self.wl_min,self.wl,self.wl_max)
         res.append("  λ: {:} --- {:} --> {:}".format(wlm,wl,wlM))
-        dm, d, dM,  = u_format(self.d_min, self.d, self.d_max )
+        dm, d, dM,  = unit_format(self.d_min, self.d, self.d_max )
         res.append("  d: {:} --- {:} --> {:}".format(dm, d, dM ))
-        pm, p, pM,  = u_format(self.p_min, self.p, self.p_max )
+        pm, p, pM,  = unit_format(self.p_min, self.p, self.p_max )
         res.append("  p: {:} --- {:} --> {:}".format(pm, p, pM ))
-        xm, xM,     = u_format(self.x_min, self.x_max)
+        xm, xM,     = unit_format(self.x_min, self.x_max)
         res.append("  x: [ {:}, {:} ] {:d}px".format(xm,xM,self.xres))
-        ym, yM,     = u_format(self.y_min, self.y_max)
+        ym, yM,     = unit_format(self.y_min, self.y_max)
         res.append("  y: [ {:}, {:} ] {:d}px".format(ym,yM,self.yres))
         return '\n'.join(res)
-
-"""
-Numpy approximate index of
-"""
-def a_indexof(array,value):
-    return np.argmin(np.abs(array-value))
-
-"""
-Arguments for extent
-"""
-def parse_args(**kwargs):
-    keys = kwargs['keys']
-    deft = kwargs.get('defaults',dict())
-    args = kwargs['args']
-    dest = kwargs.get('dest',dict())
-    for k,v in keys.items():
-        dest[k] = functools.reduce(
-                lambda x,y: args.get(y,x),
-                reversed(v+[deft.get(k,None)])
-                )
-    return dest
-def get_extent(d,*args,**kwargs):
-    kwargs.update(enumerate(kwargs.get('extent',())))
-    kwargs.update(enumerate(args))
-    e = dict()
-    a = {
-      'left': [0,'l','left'],
-      'right': [1,'r','right'],
-      'bottom': [2,'b','bottom'],
-      'top': [3,'t','top'],
-      }
-    return parse_args(keys=a,defaults=d,args=kwargs,dest=e)
-
-"""
-Extract keyword arguments
-"""
-def kwargs_extract(name,filtr,kwargs):
-    okeys = set(kwargs.keys())
-    keys = okeys & filtr
-    if len(keys) != len(kwargs):
-        print("Unrecognized arguments for '{:}':\n  {:}"\
-                .format(name,okeys-keys))
-    return { k: kwargs[k] for k in keys }
-figure_arguments = { 'num', 'figsize', 'dpi', 'facecolor', 'edgecolor',
-        'frameon', 'FigureClass', 'clear' }
-Figure_arguments = { 'figsize', 'dpi', 'facecolor', 'edgecolor', 'linewidth',
-        'frameon', 'subplotpars', 'tight_layout', 'constrained_layout' }
-def kwargs_figure(**kwargs):
-    filtr = figure_arguments | Figure_arguments
-    return kwargs_extract('figure',filtr,kwargs)
 
 """
 Complete computation
@@ -289,7 +215,7 @@ class YoungInterference(YoungConfig):
     def xrange(self):
         xr = self.__xr
         if xr is None:
-            xr = np.linspace(self.x_min,self.x_max,
+            xr = linspace(self.x_min,self.x_max,
                     num=self.xres,dtype=int)
             xr.setflags(write=0)
             self.__xr = xr
@@ -298,7 +224,7 @@ class YoungInterference(YoungConfig):
     def yrange(self):
         yr = self.__yr
         if yr is None:
-            yr = np.linspace(self.y_min,self.y_max,
+            yr = linspace(self.y_min,self.y_max,
                     num=self.yres,dtype=int)
             yr.setflags(write=0)
             self.__yr = yr
@@ -312,12 +238,12 @@ class YoungInterference(YoungConfig):
         dp = self.__dp
         if dp is None:
             # xr is a line, yr is a column
-            xr_left = np.square(self.xrange+self.d).reshape(1,-1)
-            xr_right = np.square(self.xrange-self.d).reshape(1,-1)
-            yr = np.square(self.yrange).reshape(-1,1)
+            xr_left = square(self.xrange+self.d).reshape(1,-1)
+            xr_right = square(self.xrange-self.d).reshape(1,-1)
+            yr = square(self.yrange).reshape(-1,1)
             # xo and yo are ones of same size as xr and yr
-            xo = np.ones(xr_left.shape)
-            yo = np.ones(yr.shape)
+            xo = ones(xr_left.shape)
+            yo = ones(yr.shape)
             # xs and ys are of size (yres,xres)
             xs_left = yo*xr_left
             xs_right = yo*xr_right
@@ -325,9 +251,9 @@ class YoungInterference(YoungConfig):
             ys = yr*xo
             # del xo,yr
             # ps is of size (yres,xres)
-            ps_left = np.sqrt(xs_left+ys)
+            ps_left = sqrt(xs_left+ys)
             # del xs_left
-            ps_right = np.sqrt(xs_right+ys)+self.p
+            ps_right = sqrt(xs_right+ys)+self.p
             # del xs_right,ys
             dp = ps_right - ps_left
             # del ps_left,ps_right
@@ -342,7 +268,7 @@ class YoungInterference(YoungConfig):
     def intensity(self):
         s = self.__s
         if s is None:
-            s = 4*np.square(np.cos(np.pi*self.dphase/self.wl))
+            s = 4*square(cos(pi*self.dphase/self.wl))
             s.setflags(write=0)
             self.__s = s
         return s
@@ -363,14 +289,14 @@ class YoungInterference(YoungConfig):
         s = self.intensity
         # Get indices for view, and real extent
         xr = self.xrange
-        li = a_indexof(xr,e['left'])
+        li = array_indexof(xr,e['left'])
         l  = xr[li]
-        ri = a_indexof(xr,e['right'])
+        ri = array_indexof(xr,e['right'])
         r  = xr[ri]
         yr = self.yrange
-        bi = a_indexof(yr,e['bottom'])
+        bi = array_indexof(yr,e['bottom'])
         b  = yr[bi]
-        ti = a_indexof(yr,e['top'])
+        ti = array_indexof(yr,e['top'])
         t  = yr[ti]
         # Return correct view and extent
         return s[bi:ti+1,li:ri+1],(l,r,b,t)
@@ -381,7 +307,7 @@ class YoungInterference(YoungConfig):
     @property
     def projection(self):
         s = self.intensity
-        i = a_indexof(self.yrange,self.y)
+        i = array_indexof(self.yrange,self.y)
         return s[i:i+1,:]
     def get_projection(self,*args,**kwargs):
         # Get parameters and data
@@ -395,12 +321,12 @@ class YoungInterference(YoungConfig):
         s = self.intensity
         # Get indices for view, and real extent
         xr = self.xrange
-        li = a_indexof(xr,e['left'])
+        li = array_indexof(xr,e['left'])
         l  = xr[li]
-        ri = a_indexof(xr,e['right'])
+        ri = array_indexof(xr,e['right'])
         r  = xr[ri]
         yr = self.yrange
-        bi = a_indexof(yr,e['bottom'])
+        bi = array_indexof(yr,e['bottom'])
         b  = yr[bi]
         t  = e['top']-e['bottom']+b
         return s[bi:bi+1,li:ri+1],(l,r,b,t)
@@ -411,174 +337,6 @@ class YoungInterference(YoungConfig):
     def __init__(self,**kwargs):
         YoungConfig.__init__(self,**kwargs)
 
-"""
-Complete demo
-"""
-class YoungDemo(YoungInterference):
-    DEFAULT = {
-            'h': 6, 'w': 9, 'cw': 2,
-        }
-
-    """
-    Dimensions
-    """
-    @property
-    def h(self):
-        return self.__h
-    @h.setter
-    def h(self,v):
-        self.__h =  max(1,int(v))
-    @property
-    def w(self):
-        return self.__w
-    @w.setter
-    def w(self,v):
-        self.__w = max(1,int(v))
-    @property
-    def cw(self):
-        return self.__cw
-    @cw.setter
-    def cw(self,v):
-        self.__cw = max(1,min(int(v),self.w-1))
-
-    """
-    Figure
-    """
-    @property
-    def fig(self):
-        f = self.__fig
-        if f is None:
-            f = plt.figure(**self.__fig_cfg)
-            self.__fig = f
-        return f
-
-    """
-    Axes config
-    """
-    def config_ax(self,*axs):
-        for ax in axs:
-            ax.tick_params(
-                    left=0,right=0,bottom=0,top=0,
-                    labelleft=0,labelright=0,labelbottom=0,labeltop=0,
-                    direction='out',length=3,
-                    )
-    def config_axc(self,ax=None):
-        a = self.__axc
-        if a is None:
-            self.config_ax(ax)
-            ax.tick_params(bottom=1,left=1,labelleft=1)
-            ax.set_frame_on(0)
-            ax.set_aspect(aspect='equal',anchor='S')
-            return
-        tk = tkr.FuncFormatter(lambda x,pos: '{0:.2f} cm'.format(x/1e7))
-        a.set_xticks([-self.d,self.d])
-        a.set_yticks([self.y])
-        a.yaxis.set_major_formatter(tk)
-        a.set_xlim(left=int(self.x_min/self.x_ratio),
-                right=int(self.x_max/self.x_ratio))
-        a.set_ylim(bottom=self.y_min,top=self.y_max+self.y_screen)
-    def config_axs(self,ax=None):
-        a = self.__axs
-        if a is None:
-            self.config_ax(ax)
-            return
-    def config_axz(self,ax=None):
-        a = self.__axz
-        if a is None:
-            self.config_ax(ax)
-            return
-
-    """
-    Axes
-    """
-    @property
-    def ax_complete(self):
-        a = self.__axc
-        if a is None:
-            a = plt.subplot2grid((self.h,self.w), (0,0),
-                    colspan=self.cw, rowspan=self.h, fig=self.fig)
-            self.config_axc(a)
-            self.__axc = a
-        return a
-    @property
-    def ax_screen(self):
-        a = self.__axs
-        if a is None:
-            a = plt.subplot2grid((self.h,self.w), (0,self.cw),
-                    colspan=self.w-self.cw, rowspan=1, fig=self.fig)
-            self.config_axs(a)
-            self.__axs = a
-        return a
-    @property
-    def ax_zoom(self):
-        a = self.__axz
-        if a is None:
-            a = plt.subplot2grid((self.h,self.w), (1,self.cw),
-                    colspan=self.w-self.cw, rowspan=self.h-1, fig=self.fig)
-            self.config_axz(a)
-            self.__axz = a
-        return a
-
-    """
-    Images config
-    """
-    @property
-    def im_cfg(self):
-        c = self.__imcfg
-        if c is None:
-            logging.warning('TODO: Get cmap')
-            c = {
-                    'interpolation': 'nearest',
-                    'cmap': plt.get_cmap('Greys'),
-                    'origin': 'lower',
-                }
-            self.__imcfg = c
-        return c
-
-    """
-    Draw
-    """
-    def figure_config(self,**kwargs):
-        self.__fig_cfg = kwargs_figure(**kwargs)
-    def figure(self):
-        fig = self.fig
-        self.draw_axc()
-        self.draw_axs()
-        self.draw_axz()
-        return fig
-    def draw_axc(self):
-        axc = self.ax_complete
-        # axc.cla()
-        l = int(self.x_min/self.x_ratio)
-        r = int(self.x_max/self.x_ratio)
-        im,ex = self.get_intensity(left=l,right=r)
-        axc.imshow(im,extent=ex,**self.im_cfg)
-        im,ex = self.get_projection(left=l,right=r)
-        axc.imshow(im,extent=ex,**self.im_cfg)
-        axc.axhline(self.y,color='w',linestyle='-')
-        self.config_axc()
-    def draw_axs(self):
-        pass
-    def draw_axz(self):
-        pass
-
-    """
-    Initialization
-    """
-    def __init__(self,**kwargs):
-        YoungInterference.__init__(self,**kwargs)
-        config = YoungDemo.DEFAULT.copy()
-        config.update(kwargs)
-        # Settings
-        self.h  = config['h']
-        self.w  = config['w']
-        self.cw = config['cw']
-        self.__fig_cfg = dict()
-
+# log_test(logger)
 if __name__=='__main__':
-    yc = YoungDemo()
-    # yc.y = yc.y_max/2
-    # yc.figure_config(wonderful=True,facecolor='g')
-    fig = yc.figure()
-    fig.savefig('/home/neze/Desktop/try.png')
-    plt.show()
+    pass
