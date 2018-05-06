@@ -1,5 +1,5 @@
 from matplotlib.pyplot import show
-from .demo import YoungDemo
+from ..demo import YoungDemo
 
 def run():
     y = YoungDemo()

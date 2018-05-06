@@ -13,7 +13,8 @@ def parse_args():
 
 def main():
     argv = parse_args()
-    m = import_module('.'+argv.module,package=__file__.split(os.path.sep)[-2])
+    # m = import_module('.'+argv.module,package=__file__.split(os.path.sep)[-2])
+    m = import_module('.demos.'+argv.module,package=__file__.split(os.path.sep)[-2])
     logger.info("Finished import. Starting.")
     m.run()
 
