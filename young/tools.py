@@ -23,6 +23,76 @@ class DefaultObject(object):
         return None
 
 """
+UpdateObject
+"""
+def get_notif_type(*args):
+    args = list(args)
+    try:
+        return args.pop(0),args
+    except IndexError:
+        return None,args
+class UpdateObject(object):
+    def register(self,call,*args):
+        try:
+            calls = self.__notify_calls
+        except AttributeError:
+            self.__notify_calls = dict()
+        calls = self.__notify_calls
+        for t in args:
+            call_list = calls.get(t,set())
+            call_list.add(call)
+            calls[t] = call_list
+    def unregister(self,call,*args):
+        calls = None
+        try:
+            calls = self.__notify_calls
+        except AttributeError:
+            return
+        for t in args:
+            calls.get(t,set()).discard(call)
+    def notify(self,*args,**kwargs):
+        calls = None
+        try:
+            calls = self.__notify_calls
+        except AttributeError:
+            return
+        t,args = get_notif_type(*args)
+        to_call = set()
+        if t is None:
+            for ct,tc in calls.items():
+                to_call.update(tc)
+        else:
+            to_call.update(calls.get(t,set()))
+            to_call.update(calls.get('*',set()))
+        for f in to_call:
+            f(t,*args,**kwargs)
+    def update(self,*args,**kwargs):
+        t,args = get_notif_type(*args)
+        raise NotImplementedError
+class EchoUpdateObject(UpdateObject):
+    def __init__(self,name):
+        self.__name = name
+    def update(self,*args,**kwargs):
+        t,args = get_notif_type(*args)
+        print("HELLO:{:}:{:}:{:}:{:}".format(self.__name,t,args,kwargs))
+def test_updateobject():
+    a = EchoUpdateObject("architect")
+    w = EchoUpdateObject("worker")
+    b = EchoUpdateObject("bank")
+    a.register(w.update,'plan')
+    a.register(b.update,'budget')
+    w.register(a.update,'delays')
+    w.register(a.update,'delays')
+    w.register(a.update,'delays')
+    w.register(a.update,'delays')
+    w.register(b.update,'delays')
+    a.notify('plan',"Plans changed, workers should know.")
+    a.notify('budget',"Budget changed, bank should know.")
+    w.notify('delays',"Workers are late, architect and bank should know.")
+    w.unregister(a.update,'delays')
+    w.notify('delays',"Workers are late, architect does not care anymore.")
+
+"""
 Unit formater
 """
 __verb_units = { 1: 'nm', 1e3: 'μm', 1e6: 'mm', 1e7: 'cm' }
@@ -90,4 +160,4 @@ def kwargs_figure(**kwargs):
 
 # log_test(logger)
 if __name__=='__main__':
-    pass
+    test_updateobject()
