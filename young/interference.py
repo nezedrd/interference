@@ -170,6 +170,18 @@ class YoungInterference(ProxyObject,UpdateObject):
         self._proxy_children_set(self.young_cfg,self.display_cfg)
         self._freeze()
 
+    """
+    To string
+    """
+    def __repr__(self):
+        return "YoungInterference{:d}".format(self.__id)
+    def __str__(self):
+        res = [repr(self)]
+        res.append('  '+str(self.young_cfg).replace('\n','\n  '))
+        res.append('  '+str(self.display_cfg).replace('\n','\n  '))
+        return '\n'.join(res)
+
 # log_test(logger)
 if __name__=='__main__':
-    pass
+    yi = YoungInterference()
+    print(yi)

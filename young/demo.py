@@ -10,6 +10,7 @@ Complete demo
 """
 class YoungDemo(ProxyObject,UpdateObject):
     __id = 0
+    ATTRIBUTES = ['h','w','cw']
     DEFAULT = {
             'h': 6, 'w': 9, 'cw': 2,
         }
@@ -18,13 +19,21 @@ class YoungDemo(ProxyObject,UpdateObject):
     Children
     """
     @property
-    def if_obj(self):
-        return self.__if_obj
-    @if_obj.setter
-    def if_obj(self,v):
-        if self.__if_obj is not None:
+    def normal(self):
+        return self.__normal
+    @normal.setter
+    def normal(self,v):
+        if self.__normal is not None:
             raise AttributeError
-        self.__if_obj = v
+        self.__normal = v
+    @property
+    def zoom(self):
+        return self.__zoom
+    @zoom.setter
+    def zoom(self,v):
+        if self.__zoom is not None:
+            raise AttributeError
+        self.__zoom = v
 
     """
     Dimensions
@@ -55,7 +64,7 @@ class YoungDemo(ProxyObject,UpdateObject):
     def fig(self):
         f = self.__fig
         if f is None:
-            f = figure(**self.__fig_cfg)
+            f = figure(**self.fig_cfg)
             self.__fig = f
         return f
 
@@ -149,8 +158,15 @@ class YoungDemo(ProxyObject,UpdateObject):
     """
     Draw
     """
+    @property
+    def fig_cfg(self):
+        c = self.__figcfg
+        if c is None:
+            c = dict()
+            self.__figcfg = c
+        return c
     def figure_config(self,**kwargs):
-        self.__fig_cfg = kwargs_figure(**kwargs)
+        self.__figcfg = kwargs_figure(**kwargs)
     def figure(self):
         fig = self.fig
         self.draw_axc()
@@ -195,21 +211,37 @@ class YoungDemo(ProxyObject,UpdateObject):
         YoungDemo.__id += 1
         self.__id = YoungDemo.__id
         # Child configurations
-        ifobj = kwargs.pop('if_obj',None)
-        self.if_obj = ifobj or YoungInterference(**kwargs)
+        self.normal = YoungInterference(**kwargs)
+        ycfg = self.normal.young_cfg
+        zdcfg = self.normal.display_cfg.copy()
+        zdcfg.x_max = ycfg.d_max
+        zdcfg.y_max = .75*ycfg.d_max
+        zdcfg.x_min = -zdcfg.x_max
+        zdcfg.y_min = -zdcfg.y_max
+        self.zoom = YoungInterference(young_cfg=ycfg,display_cfg=zdcfg)
         # Build configuration
         config = YoungDemo.DEFAULT.copy()
         config.update(kwargs)
         # Settings
-        self.h  = config['h']
-        self.w  = config['w']
-        self.cw = config['cw']
-        self.__fig_cfg = dict()
+        for key in YoungDemo.ATTRIBUTES:
+            setattr(self,key,config[key])
         # Subscribe for updates
         # Proxy setup
-        self._proxy_children_set(self.if_obj)
+        self._proxy_children_set(self.normal)
         self._freeze()
+
+    """
+    To string
+    """
+    def __repr__(self):
+        return "YoungDemo{:d}".format(self.__id)
+    def __str__(self):
+        res = [repr(self)]
+        res.append('  (normal) '+str(self.normal).replace('\n','\n  '))
+        res.append('  (zoomed) '+str(self.zoom).replace('\n','\n  '))
+        return '\n'.join(res)
 
 # log_test(logger)
 if __name__=='__main__':
-    pass
+    yd = YoungDemo()
+    print(yd)

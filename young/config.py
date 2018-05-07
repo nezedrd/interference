@@ -7,6 +7,8 @@ Experiment configuration
 """
 class YoungConfig(DefaultObject,UpdateObject):
     __id = 0
+    ATTRIBUTES = ['wl_min','wl_max','wl',\
+            'd_min','d_max','d','p_min','p_max','p']
     DEFAULT = {
             'wl_min': 400, 'wl_max': 700, 'wl': 532,
             'd_min': 0, 'd_max': 20e3, 'd': 10e3,
@@ -92,15 +94,13 @@ class YoungConfig(DefaultObject,UpdateObject):
         config = YoungConfig.DEFAULT.copy()
         config.update(kwargs)
         # Settings
-        self.wl_min   = config['wl_min']
-        self.wl_max   = config['wl_max']
-        self.wl       = config['wl']
-        self.d_min    = config['d_min']
-        self.d_max    = config['d_max']
-        self.d        = config['d']
-        self.p_min    = config['p_min']
-        self.p_max    = config['p_max']
-        self.p        = config['p']
+        for key in YoungConfig.ATTRIBUTES:
+            setattr(self,key,config[key])
+    def copy(self):
+        config = dict()
+        for key in YoungConfig.ATTRIBUTES:
+            config[key] = getattr(self,key)
+        return YoungConfig(**config)
 
     """
     To string
@@ -121,6 +121,8 @@ Graphical configuration
 """
 class DisplayConfig(DefaultObject,UpdateObject):
     __id = 0
+    ATTRIBUTES = ['x_min','x_max','x','x_ratio',\
+            'y_min','y_max','y','y_screen','res']
     DEFAULT = {
             'x_min': -20e7, 'x_max': 20e7, 'x': 0, 'x_ratio': 4,
             'y_min': 0, 'y_max': 30e7, 'y': 30e7, 'y_screen': 1e7,
@@ -211,15 +213,13 @@ class DisplayConfig(DefaultObject,UpdateObject):
         config = DisplayConfig.DEFAULT.copy()
         config.update(kwargs)
         # Settings
-        self.x_min    = config['x_min']
-        self.x_max    = config['x_max']
-        self.x        = config['x']
-        self.x_ratio  = config['x_ratio']
-        self.res      = config['res']
-        self.y_min    = config['y_min']
-        self.y_max    = config['y_max']
-        self.y        = config['y']
-        self.y_screen = config['y_screen']
+        for key in DisplayConfig.ATTRIBUTES:
+            setattr(self,key,config[key])
+    def copy(self):
+        config = dict()
+        for key in DisplayConfig.ATTRIBUTES:
+            config[key] = getattr(self,key)
+        return DisplayConfig(**config)
 
     """
     To string
@@ -236,4 +236,8 @@ class DisplayConfig(DefaultObject,UpdateObject):
 
 # log_test(logger)
 if __name__ == '__main__':
-    pass
+    yc = YoungConfig()
+    print(yc)
+    print("====")
+    dc = DisplayConfig()
+    print(dc)
