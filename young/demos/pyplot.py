@@ -1,7 +1,7 @@
 from matplotlib.pyplot import show
 from argparse import ArgumentParser
 from logging import getLogger,DEBUG,ERROR
-from ..demo import YoungDemo
+from ..demo import YoungDemo,logger as dlg
 from ..tools import logger as tlg
 logger = getLogger(__name__)
 
@@ -24,6 +24,8 @@ def run(argv):
 
     # logger.setLevel(ERROR)
     # tlg.setLevel(ERROR)
+
+    dlg.setLevel(DEBUG)
 
     y.figure()
     print(y)

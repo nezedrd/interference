@@ -1,6 +1,7 @@
 from logging import getLogger
 from matplotlib.pyplot import figure,subplot2grid,Circle
 from matplotlib.ticker import FuncFormatter
+from matplotlib.widgets import Slider
 from .interference import YoungInterference
 from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject,wavelength_to_color,color_to_cmap,array_indexof
 logger = getLogger(__name__)
@@ -62,13 +63,16 @@ class YoungDemo(ProxyObject,UpdateObject):
     """
     @property
     def color(self):
+        logger.debug("Requesting color")
         c = self.__color
         if c is None:
+            logger.debug("Computing color from wavelength {:d}".format(self.wl))
             c = wavelength_to_color(self.wl)
             self.__color = c
         return c
     @property
     def cmap(self):
+        logger.debug("Requesting cmap")
         c = self.__cmap
         if c is None:
             c = color_to_cmap(self.color)
@@ -192,6 +196,37 @@ class YoungDemo(ProxyObject,UpdateObject):
         return a
 
     """
+    Sliders
+    """
+    __slider_h  = .015
+    __slider_ih = .008
+    __slider_l  = .37
+    __slider_r  = .15
+    __slider_y  = .99
+    __slider_p  = {
+            'valfmt': '%d',
+            'closedmax': False,
+            'valstep': 1,
+        }
+    def new_slider_ax(self):
+        self.__slider_y -= self.__slider_h+self.__slider_ih
+        return self.fig.add_axes([self.__slider_l,self.__slider_y,\
+                1-self.__slider_l-self.__slider_r,self.__slider_h])
+    @property
+    def wl_slider(self):
+        s = self.__wl_slider
+        if s is None:
+            ax = self.new_slider_ax()
+            s = Slider(ax, 'Wavelength (nm)', self.wl_min, self.wl_max,\
+                    valinit=self.wl, **self.__slider_p)
+            s.on_changed(self.wl_update)
+            self.__wl_slider = s
+        return s
+    def wl_update(self,v):
+        logger.info("Update wavelength:{:d}".format(int(v)))
+        self.wl = v
+
+    """
     Images config
     """
     @property
@@ -219,11 +254,13 @@ class YoungDemo(ProxyObject,UpdateObject):
     def figure_config(self,**kwargs):
         self.__figcfg = kwargs_figure(**kwargs)
     def figure(self):
-        fig = self.fig
+        self.draw()
+        return self.fig
+    def draw(self):
         self.draw_axc()
         self.draw_axs()
         self.draw_axz()
-        return fig
+        _ = self.wl_slider
     def draw_axc(self):
         axc = self.ax_complete
         axc.cla()
@@ -270,6 +307,47 @@ class YoungDemo(ProxyObject,UpdateObject):
         pass
 
     """
+    Update handlers
+    """
+    def color_reset(self,**kwargs):
+        self.__color = None
+        self.__cmap = None
+        self.__imcfg = None
+        self.draw_axc()
+        self.draw_axz()
+        self.draw_axs()
+        self.fig.canvas.draw()
+    def intensity_reset(self,**kwargs):
+        who = kwargs.get('who',None)
+        if who is self.normal:
+            self.draw_axc()
+        elif who is self.zoom:
+            self.draw_axz()
+        self.fig.canvas.draw()
+    def projection_reset(self,**kwargs):
+        who = kwargs.get('who',None)
+        if who is self.normal:
+            self.draw_axc()
+            self.draw_axs()
+        self.fig.canvas.draw()
+
+    """
+    Update
+    """
+    __handlers = {
+            'wl': 'color_reset',
+            'intensity': 'intensity_reset',
+            'projection': 'projection_reset',
+        }
+    def update(self,*args,**kwargs):
+        logger.info("update:{:}:{:}".format(args,kwargs))
+        for t in args:
+            if t in self.__handlers:
+                getattr(self,self.__handlers[t])(**kwargs)
+            else:
+                logger.error("update:{:}:NotImplemented".format(t))
+
+    """
     Initialization
     """
     def __init__(self,**kwargs):
@@ -293,6 +371,7 @@ class YoungDemo(ProxyObject,UpdateObject):
         for key in YoungDemo.ATTRIBUTES:
             setattr(self,key,config[key])
         # Subscribe for updates
+        self.normal.register(self,'wl')
         # Proxy setup
         self._proxy_children_set(self.normal)
         self._freeze()

@@ -66,56 +66,47 @@ class ProxyObject(object):
 """
 UpdateObject
 """
-def get_notif_type(*args):
-    args = list(args)
-    try:
-        return args.pop(0),args
-    except IndexError:
-        return None,args
-class UpdateObject(object):
+class UpdateObject(DefaultObject):
     def register(self,call,*args):
-        try:
-            calls = self.__notify_calls
-        except AttributeError:
-            self.__notify_calls = dict()
         calls = self.__notify_calls
+        if calls is None:
+            calls = dict()
+            self.__notify_calls = calls
         for t in args:
             call_list = calls.get(t,set())
             call_list.add(call)
             calls[t] = call_list
     def unregister(self,call,*args):
-        calls = None
-        try:
-            calls = self.__notify_calls
-        except AttributeError:
+        calls = self.__notify_calls
+        if calls is None:
             return
         for t in args:
             calls.get(t,set()).discard(call)
     def notify(self,*args,**kwargs):
-        calls = None
-        try:
-            calls = self.__notify_calls
-        except AttributeError:
+        calls = self.__notify_calls
+        if calls is None:
             return
-        t,args = get_notif_type(*args)
-        to_call = set()
-        if t is None:
+        to_call = dict() # object: list_of_reasons
+        if not args:     # just notify everybody without reason
             for ct,tc in calls.items():
-                to_call.update(tc)
+                to_call = { k: [] for k in tc }
         else:
-            to_call.update(calls.get(t,set()))
-            to_call.update(calls.get('*',set()))
-        for f in to_call:
-            f(t,*args,**kwargs)
+            for t in args:
+                for o in calls.get(t,set()):
+                    to_call[o] = to_call.get(o,list())
+                    to_call[o].append(t)
+            for o in calls.get('*',set()):
+                to_call[o] = to_call.get(o,list())
+        for o,reasons in to_call.items():
+            o.update(*reasons,**kwargs)
     def update(self,*args,**kwargs):
-        t,args = get_notif_type(*args)
+        logger.debug("update:types {:}:args {:}".format(args,kwargs))
         raise NotImplementedError
 class EchoUpdateObject(UpdateObject):
     def __init__(self,name):
         self.__name = name
     def update(self,*args,**kwargs):
-        t,args = get_notif_type(*args)
-        print("HELLO:{:}:{:}:{:}:{:}".format(self.__name,t,args,kwargs))
+        print("HELLO:{:}:{:}:{:}".format(self.__name,args,kwargs))
 def test_updateobject():
     a = EchoUpdateObject("architect")
     w = EchoUpdateObject("worker")

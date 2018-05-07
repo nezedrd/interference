@@ -94,6 +94,9 @@ class YoungInterference(ProxyObject,UpdateObject):
             s.setflags(write=0)
             self.__s = s
         return s
+    def wl_reset(self):
+        self.__s = None
+        self.notify('wl')
     """
     get_intensity(left,right,bottom,top)
     get_intensity(extent=(l,r,b,t))
@@ -159,6 +162,20 @@ class YoungInterference(ProxyObject,UpdateObject):
         return s[bi:bi+1,li:ri+1],(l,r,b,t)
 
     """
+    Update
+    """
+    __handlers = {
+            'wl': 'wl_reset',
+        }
+    def update(self,*args,**kwargs):
+        logger.info("update:{:}:{:}".format(args,kwargs))
+        for t in args:
+            if t in self.__handlers:
+                getattr(self,self.__handlers[t])()
+            else:
+                logger.error("update:{:}:NotImplemented".format(t))
+
+    """
     Interference part needs no initialization
     """
     def __init__(self,**kwargs):
@@ -171,6 +188,7 @@ class YoungInterference(ProxyObject,UpdateObject):
         self.young_cfg = ycfg or YoungConfig(**kwargs)
         self.display_cfg = dcfg or DisplayConfig(**kwargs)
         # Subscribe for updates
+        self.young_cfg.register(self,'wl')
         # Proxy setup
         self._proxy_children_set(self.young_cfg,self.display_cfg)
         self._freeze()

@@ -1,11 +1,11 @@
-from .tools import log_test,DefaultObject,UpdateObject,unit_format
+from .tools import log_test,UpdateObject,unit_format
 from logging import getLogger
 logger = getLogger(__name__)
 
 """
 Experiment configuration
 """
-class YoungConfig(DefaultObject,UpdateObject):
+class YoungConfig(UpdateObject):
     __id = 0
     ATTRIBUTES = ['wl_min','wl_max','wl',\
             'd_min','d_max','d','p_min','p_max','p']
@@ -42,6 +42,7 @@ class YoungConfig(DefaultObject,UpdateObject):
     @wl.setter
     def wl(self,v):
         self.__wl = int(max(self.wl_min,min(v,self.wl_max)))
+        self.notify('wl')
 
     # Intersource distance
     @property
@@ -119,7 +120,7 @@ class YoungConfig(DefaultObject,UpdateObject):
 """
 Graphical configuration
 """
-class DisplayConfig(DefaultObject,UpdateObject):
+class DisplayConfig(UpdateObject):
     __id = 0
     ATTRIBUTES = ['x_min','x_max','x','x_ratio',\
             'y_min','y_max','y','y_screen','res']
