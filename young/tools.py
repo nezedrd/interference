@@ -84,6 +84,7 @@ class UpdateObject(DefaultObject):
             calls.get(t,set()).discard(call)
     def notify(self,*args,**kwargs):
         calls = self.__notify_calls
+        kwargs['who'] = kwargs.get('who',self)
         if calls is None:
             return
         to_call = dict() # object: list_of_reasons
