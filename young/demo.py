@@ -1,8 +1,8 @@
 from logging import getLogger
-from matplotlib.pyplot import figure,subplot2grid,get_cmap
+from matplotlib.pyplot import figure,subplot2grid,Circle
 from matplotlib.ticker import FuncFormatter
 from .interference import YoungInterference
-from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject
+from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject,wavelength_to_color,color_to_cmap,array_indexof
 logger = getLogger(__name__)
 
 """
@@ -58,6 +58,57 @@ class YoungDemo(ProxyObject,UpdateObject):
         self.__cw = max(1,min(int(v),self.w-1))
 
     """
+    Colormap
+    """
+    @property
+    def color(self):
+        c = self.__color
+        if c is None:
+            c = wavelength_to_color(self.wl)
+            self.__color = c
+        return c
+    @property
+    def cmap(self):
+        c = self.__cmap
+        if c is None:
+            c = color_to_cmap(self.color)
+            self.__cmap = c
+        return c
+
+    """
+    Source points
+    """
+    @property
+    def normal_srcs(self):
+        s = self.__normal_srcs
+        if s is None:
+            p = { 'color': self.color, 'ec': 'w', 'radius': (self.x_max-self.x_min)/self.x_ratio/80 }
+            s = (Circle((-self.d,0),**p),Circle((self.d,0),**p))
+            self.__normal_srcs = s
+        return s
+    @property
+    def zoom_srcs(self):
+        s = self.__zoom_srcs
+        if s is None:
+            p = { 'color': self.color, 'ec': 'w', 'radius': (self.zoom.x_max-self.zoom.x_min)/200 }
+            s = (Circle((-self.d,0),**p),Circle((self.d,0),**p))
+            self.__zoom_srcs = s
+        return s
+
+    """
+    Middle x
+    """
+    @property
+    def x_mid(self):
+        x = self.__x_mid
+        if x is None:
+            xr = self.xrange
+            dp = self.projection_phase
+            x = xr[array_indexof(dp,0)]
+            self.__x_mid = x
+        return x
+
+    """
     Figure
     """
     @property
@@ -99,7 +150,7 @@ class YoungDemo(ProxyObject,UpdateObject):
             self.config_ax(ax)
             ax.tick_params(bottom=1,top=1)
             return
-        a.set_xticks([0])
+        a.set_xticks([0,self.x_mid])
         a.set_yticks([])
         a.set_aspect(aspect='auto')
     def config_axz(self,ax=None):
@@ -107,6 +158,7 @@ class YoungDemo(ProxyObject,UpdateObject):
         if a is None:
             self.config_ax(ax)
             return
+        a.set_aspect(aspect='equal',anchor='S')
 
     """
     Axes
@@ -146,10 +198,9 @@ class YoungDemo(ProxyObject,UpdateObject):
     def im_cfg(self):
         c = self.__imcfg
         if c is None:
-            logger.warning('TODO: Get cmap')
             c = {
                     'interpolation': 'nearest',
-                    'cmap': get_cmap('Greys'),
+                    'cmap': self.cmap,
                     'origin': 'lower',
                 }
             self.__imcfg = c
@@ -185,6 +236,10 @@ class YoungDemo(ProxyObject,UpdateObject):
         # Get and draw screen
         im,ex = self.get_projection(left=l,right=r)
         axc.imshow(im,extent=ex,**self.im_cfg)
+        # Draw source points
+        sl,sr = self.normal_srcs
+        axc.add_artist(sl)
+        axc.add_artist(sr)
         # Draw nice separation line
         axc.axhline(self.y,color='w',linestyle='-')
         # Reconfigure volatile aspect settings
@@ -195,11 +250,22 @@ class YoungDemo(ProxyObject,UpdateObject):
         # Get and draw screen
         im,ex = self.get_projection(left=self.x_min,right=self.x_max)
         axs.imshow(im,extent=ex,**self.im_cfg)
+        # Draw nice middle fringe line
+        axs.axvline(self.x_mid,color='w',linestyle='--')
         # Reconfigure volatile aspect settings
         self.config_axs()
         pass
     def draw_axz(self):
         axz = self.ax_zoom
+        axz.cla()
+        # Get and draw space
+        im,ex = self.zoom.get_intensity()
+        axz.imshow(im,extent=ex,**self.im_cfg)
+        # Draw source points
+        sl,sr = self.zoom_srcs
+        axz.add_artist(sl)
+        axz.add_artist(sr)
+        # Reconfigure volatile aspect settings
         self.config_axz()
         pass
 
@@ -214,8 +280,9 @@ class YoungDemo(ProxyObject,UpdateObject):
         self.normal = YoungInterference(**kwargs)
         ycfg = self.normal.young_cfg
         zdcfg = self.normal.display_cfg.copy()
-        zdcfg.x_max = ycfg.d_max
-        zdcfg.y_max = .75*ycfg.d_max
+        zboxratio = kwargs.get('zboxratio',9/16)
+        zdcfg.x_max = ycfg.d_max*1.01
+        zdcfg.y_max = zboxratio*zdcfg.x_max
         zdcfg.x_min = -zdcfg.x_max
         zdcfg.y_min = -zdcfg.y_max
         self.zoom = YoungInterference(young_cfg=ycfg,display_cfg=zdcfg)

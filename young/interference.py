@@ -127,6 +127,11 @@ class YoungInterference(ProxyObject,UpdateObject):
     Extracting screen
     """
     @property
+    def projection_phase(self):
+        d = self.dphase
+        i = array_indexof(self.yrange,self.y)
+        return d[i:i+1,:]
+    @property
     def projection(self):
         s = self.intensity
         i = array_indexof(self.yrange,self.y)

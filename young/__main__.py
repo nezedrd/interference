@@ -1,5 +1,5 @@
 from logging import basicConfig,getLogger,DEBUG,INFO,WARNING,ERROR,CRITICAL
-basicConfig(level=DEBUG)
+basicConfig(level=INFO)
 
 from os.path import sep
 from argparse import ArgumentParser,REMAINDER

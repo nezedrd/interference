@@ -1,7 +1,11 @@
 from numpy import array,argmin
 from functools import reduce
-from logging import getLogger
+from matplotlib.pyplot import get_cmap
+from matplotlib.colors import LinearSegmentedColormap
+from numpy import linspace,array,ones
+from logging import getLogger,ERROR,DEBUG
 logger = getLogger(__name__)
+logger.setLevel(ERROR)
 
 """
 Test logger
@@ -28,23 +32,23 @@ class DefaultObject(object):
 ProxyObject
 """
 class ProxyObject(object):
-    # def __hasattr__(self,key):
-        # try:
-            # _ = self.__getattribute__(key)
-        # except AttributeError:
-            # return False
-        # return True
     def __getattr__(self,key):
-        logger.debug("ProxyObject:__getattr__:{:}:{:}".format(repr(self),key))
+        lgid = "ProxyObject:__getattr__:{:}:{:}".format(repr(self),key)
+        logger.debug(lgid)
         if key[0] == '_':
+            logger.debug(lgid+":Returning None")
             return None
+        logger.debug(lgid+":Looking at children")
         for o in self.__proxy_children:
-            if hasattr(o,key):
+            try:
+                logger.debug(lgid+":Delegating to {:}".format(repr(o)))
                 return getattr(o,key)
+            except AttributeError:
+                logger.debug(lgid+":Delegation to {:} failed".format(repr(o)))
         raise AttributeError(key)
     def __setattr__(self,key,val):
         logger.debug("ProxyObject:__setattr__:{:}:{:}:{:}".format(repr(self),key,val))
-        if not self.__frozen or hasattr(self,key):
+        if not self.__frozen or key[0] == '_' or key in self.__dict__:
             object.__setattr__(self,key,val)
             return
         for o in self.__proxy_children:
@@ -195,6 +199,23 @@ def kwargs_figure(**kwargs):
     filtr = figure_arguments | Figure_arguments
     return kwargs_extract('figure',filtr,kwargs)
 
+"""
+Get wavelength cmap
+"""
+__wavelength_spectre = get_cmap('nipy_spectral')
+__cmap_res = 2
+def wavelength_to_color(wl):
+    w = max(0,min(wl,700))
+    l = (w-400.)/300.
+    return __wavelength_spectre(l)
+def color_to_cmap(color):
+    color = [color]*__cmap_res
+    smooth = linspace(0.,1.,__cmap_res)
+    smooth = array([smooth,smooth,smooth,ones(__cmap_res,dtype=float)]).transpose()
+    colors = color*smooth
+    return LinearSegmentedColormap.from_list('colormap',colors)
+
 # log_test(logger)
 if __name__=='__main__':
+    logger.setLevel(DEBUG)
     test_updateobject()
