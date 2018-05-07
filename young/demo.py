@@ -2,16 +2,29 @@ from logging import getLogger
 from matplotlib.pyplot import figure,subplot2grid,get_cmap
 from matplotlib.ticker import FuncFormatter
 from .interference import YoungInterference
-from .tools import log_test,kwargs_figure
+from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject
 logger = getLogger(__name__)
 
 """
 Complete demo
 """
-class YoungDemo(YoungInterference):
+class YoungDemo(ProxyObject,UpdateObject):
+    __id = 0
     DEFAULT = {
             'h': 6, 'w': 9, 'cw': 2,
         }
+
+    """
+    Children
+    """
+    @property
+    def if_obj(self):
+        return self.__if_obj
+    @if_obj.setter
+    def if_obj(self,v):
+        if self.__if_obj is not None:
+            raise AttributeError
+        self.__if_obj = v
 
     """
     Dimensions
@@ -178,7 +191,13 @@ class YoungDemo(YoungInterference):
     Initialization
     """
     def __init__(self,**kwargs):
-        YoungInterference.__init__(self,**kwargs)
+        # Give an ID
+        YoungDemo.__id += 1
+        self.__id = YoungDemo.__id
+        # Child configurations
+        ifobj = kwargs.pop('if_obj',None)
+        self.if_obj = ifobj or YoungInterference(**kwargs)
+        # Build configuration
         config = YoungDemo.DEFAULT.copy()
         config.update(kwargs)
         # Settings
@@ -186,6 +205,10 @@ class YoungDemo(YoungInterference):
         self.w  = config['w']
         self.cw = config['cw']
         self.__fig_cfg = dict()
+        # Subscribe for updates
+        # Proxy setup
+        self._proxy_children_set(self.if_obj)
+        self._freeze()
 
 # log_test(logger)
 if __name__=='__main__':

@@ -20,7 +20,44 @@ DefaultObject
 """
 class DefaultObject(object):
     def __getattr__(self,name):
-        return None
+        if name[0] == '_':
+            return None
+        raise AttributeError(name)
+
+"""
+ProxyObject
+"""
+class ProxyObject(object):
+    # def __hasattr__(self,key):
+        # try:
+            # _ = self.__getattribute__(key)
+        # except AttributeError:
+            # return False
+        # return True
+    def __getattr__(self,key):
+        logger.debug("ProxyObject:__getattr__:{:}:{:}".format(repr(self),key))
+        if key[0] == '_':
+            return None
+        for o in self.__proxy_children:
+            if hasattr(o,key):
+                return getattr(o,key)
+        raise AttributeError(key)
+    def __setattr__(self,key,val):
+        logger.debug("ProxyObject:__setattr__:{:}:{:}:{:}".format(repr(self),key,val))
+        if not self.__frozen or hasattr(self,key):
+            object.__setattr__(self,key,val)
+            return
+        for o in self.__proxy_children:
+            if hasattr(o,key):
+                o.__setattr__(key,val)
+                return
+        raise AttributeError(key)
+    def _freeze(self):
+        logger.debug("ProxyObject:_freeze:{:}".format(repr(self)))
+        self.__frozen = 1
+    def _proxy_children_set(self,*args):
+        logger.debug("ProxyObject:_proxy_children_set:{:}:{:}".format(repr(self),list(args)))
+        self.__proxy_children = list(args)
 
 """
 UpdateObject
