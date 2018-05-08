@@ -129,7 +129,7 @@ class DisplayConfig(UpdateObject):
     DEFAULT = {
             'x_min': -20e7, 'x_max': 20e7, 'x': 0, 'x_ratio': 4,
             'y_min': 0, 'y_max': 30e7, 'y': 30e7, 'y_screen': 1e7,
-            'res': 4096, # Number of pixels for the whole width
+            'res': 2048, # Number of pixels for the whole width
         }
 
     """
