@@ -225,6 +225,19 @@ class YoungDemo(ProxyObject,UpdateObject):
     def wl_update(self,v):
         logger.info("Update wavelength:{:d}".format(int(v)))
         self.wl = v
+    @property
+    def p_slider(self):
+        s = self.__p_slider
+        if s is None:
+            ax = self.new_slider_ax()
+            s = Slider(ax, 'Phase delay (nm)', self.p_min, self.p_max,\
+                    valinit=self.p, **self.__slider_p)
+            s.on_changed(self.p_update)
+            self.__p_slider = s
+        return s
+    def p_update(self,v):
+        logger.info("Update phase delay:{:d}".format(int(v)))
+        self.p = v
 
     """
     Images config
@@ -261,6 +274,7 @@ class YoungDemo(ProxyObject,UpdateObject):
         self.draw_axs()
         self.draw_axz()
         _ = self.wl_slider
+        _ = self.p_slider
     def draw_axc(self):
         axc = self.ax_complete
         axc.cla()
@@ -309,14 +323,30 @@ class YoungDemo(ProxyObject,UpdateObject):
     """
     Update handlers
     """
+    __color_reset_trigger = 0
     def color_reset(self,**kwargs):
-        self.__color = None
-        self.__cmap = None
-        self.__imcfg = None
-        self.draw_axc()
-        self.draw_axz()
-        self.draw_axs()
-        self.fig.canvas.draw()
+        if self.__color_reset_trigger:
+            self.__color = None
+            self.__cmap = None
+            self.__imcfg = None
+            self.__zoom_srcs = None
+            self.__normal_srcs = None
+            self.draw()
+            self.fig.canvas.draw()
+        else:
+            logger.info("color_reset:avoided")
+        self.__color_reset_trigger ^= 1
+
+    __p_reset_trigger = 0
+    def p_reset(self,**kwargs):
+        if self.__p_reset_trigger:
+            self.__x_mid = None
+            self.draw()
+            self.fig.canvas.draw()
+        else:
+            logger.info("p_reset:avoided")
+        self.__p_reset_trigger ^= 1
+
     def intensity_reset(self,**kwargs):
         who = kwargs.get('who',None)
         if who is self.normal:
@@ -336,8 +366,9 @@ class YoungDemo(ProxyObject,UpdateObject):
     """
     __handlers = {
             'wl': 'color_reset',
-            'intensity': 'intensity_reset',
-            'projection': 'projection_reset',
+            'p': 'p_reset',
+            # 'intensity': 'intensity_reset',
+            # 'projection': 'projection_reset',
         }
     def update(self,*args,**kwargs):
         logger.info("update:{:}:{:}".format(args,kwargs))
@@ -372,6 +403,9 @@ class YoungDemo(ProxyObject,UpdateObject):
             setattr(self,key,config[key])
         # Subscribe for updates
         self.normal.register(self,'wl')
+        self.zoom.register(self,'wl')
+        self.normal.register(self,'p')
+        self.zoom.register(self,'p')
         # Proxy setup
         self._proxy_children_set(self.normal)
         self._freeze()

@@ -83,6 +83,7 @@ class YoungConfig(UpdateObject):
     @p.setter
     def p(self,v):
         self.__p = int(max(self.p_min,min(v,self.p_max)))
+        self.notify('p')
 
     """
     Initialize configuration
