@@ -98,6 +98,7 @@ class UpdateObject(DefaultObject):
                     to_call[o].append(t)
             for o in calls.get('*',set()):
                 to_call[o] = to_call.get(o,list())
+        logger.debug("Will notify:{:}".format(to_call))
         for o,reasons in to_call.items():
             o.update(*reasons,**kwargs)
     def update(self,*args,**kwargs):
@@ -140,6 +141,15 @@ def unit_format(*args,fs='{:4d}'):
             ret = [ f.format(Y) for Y in y ]
             return (*ret,)
     return None
+def unit_identify(*args):
+    steps = __verb_units.keys()
+    a = array(args,dtype=int)
+    for c in reversed(sorted(steps)):
+        x = a/c
+        y = x.astype(int)
+        if (y == x).all():
+            return __verb_units[c],c
+    return None,None
 
 """
 Numpy approximate index of

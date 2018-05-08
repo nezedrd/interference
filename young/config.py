@@ -63,6 +63,7 @@ class YoungConfig(UpdateObject):
     @d.setter
     def d(self,v):
         self.__d = int(max(self.d_min,min(v,self.d_max)))
+        self.notify('d')
 
     # Phase delay
     @property
@@ -179,7 +180,9 @@ class DisplayConfig(UpdateObject):
         return self.__y
     @y.setter
     def y(self,v):
+        logger.debug("y.setter:{:}".format(v))
         self.__y = int(max(self.y_min,min(v,self.y_max)))
+        self.notify('y')
     @property
     def y_screen(self):
         return self.__ys

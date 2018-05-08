@@ -3,7 +3,7 @@ from matplotlib.pyplot import figure,subplot2grid,Circle
 from matplotlib.ticker import FuncFormatter
 from matplotlib.widgets import Slider
 from .interference import YoungInterference
-from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject,wavelength_to_color,color_to_cmap,array_indexof
+from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject,wavelength_to_color,color_to_cmap,array_indexof,unit_identify
 logger = getLogger(__name__)
 
 """
@@ -205,7 +205,7 @@ class YoungDemo(ProxyObject,UpdateObject):
     __slider_y  = .99
     __slider_p  = {
             'valfmt': '%d',
-            'closedmax': False,
+            'closedmax': True,
             'valstep': 1,
         }
     def new_slider_ax(self):
@@ -238,6 +238,45 @@ class YoungDemo(ProxyObject,UpdateObject):
     def p_update(self,v):
         logger.info("Update phase delay:{:d}".format(int(v)))
         self.p = v
+    @property
+    def y_slider(self):
+        s = self.__y_slider
+        if s is None:
+            ax = self.new_slider_ax()
+            unit,alpha = unit_identify(self.y_min,self.y,self.y_max)
+            self.__y_slider_alpha = alpha
+            y_min = self.y_min/alpha
+            y_max = self.y_max/alpha
+            y = self.y/alpha
+            s = Slider(ax, 'Screen distance ({:})'.format(unit),
+                    y_min,y_max,valinit = y,
+                    valfmt='%1.2f',valstep=.01)
+            s.on_changed(self.y_update)
+            self.__y_slider = s
+        return s
+    def y_update(self,v):
+        logger.info("Update screen position:{:1.2f}".format(v))
+        self.y = v*self.__y_slider_alpha
+    @property
+    def d_slider(self):
+        s = self.__d_slider
+        if s is None:
+            ax = self.new_slider_ax()
+            unit,alpha = unit_identify(self.d_min,self.d,self.d_max)
+            alpha /= 2.
+            self.__d_slider_alpha = alpha
+            d_min = self.d_min/alpha
+            d_max = self.d_max/alpha
+            d = self.d/alpha
+            s = Slider(ax, 'Intersource ({:})'.format(unit),
+                    d_min,d_max,valinit = d,
+                    valfmt='%1.2f',valstep=.05)
+            s.on_changed(self.d_update)
+            self.__d_slider = s
+        return s
+    def d_update(self,v):
+        logger.info("Update intersource:{:1.2f}".format(v))
+        self.d = v*self.__d_slider_alpha
 
     """
     Images config
@@ -275,6 +314,8 @@ class YoungDemo(ProxyObject,UpdateObject):
         self.draw_axz()
         _ = self.wl_slider
         _ = self.p_slider
+        _ = self.y_slider
+        _ = self.d_slider
     def draw_axc(self):
         axc = self.ax_complete
         axc.cla()
@@ -347,19 +388,24 @@ class YoungDemo(ProxyObject,UpdateObject):
             logger.info("p_reset:avoided")
         self.__p_reset_trigger ^= 1
 
-    def intensity_reset(self,**kwargs):
-        who = kwargs.get('who',None)
-        if who is self.normal:
-            self.draw_axc()
-        elif who is self.zoom:
-            self.draw_axz()
+    def y_reset(self,**kwargs):
+        self.__x_mid = None
+        self.draw_axc()
+        self.draw_axs()
         self.fig.canvas.draw()
-    def projection_reset(self,**kwargs):
-        who = kwargs.get('who',None)
-        if who is self.normal:
-            self.draw_axc()
-            self.draw_axs()
-        self.fig.canvas.draw()
+
+    __d_reset_trigger = 0
+    def d_reset(self,**kwargs):
+        if self.__d_reset_trigger:
+            self.__xmid = None
+            self.__zoom_srcs = None
+            self.__normal_srcs = None
+            self.draw()
+            self.fig.canvas.draw()
+        else:
+            logger.info("d_reset:avoided")
+        self.__d_reset_trigger ^= 1
+
 
     """
     Update
@@ -367,8 +413,8 @@ class YoungDemo(ProxyObject,UpdateObject):
     __handlers = {
             'wl': 'color_reset',
             'p': 'p_reset',
-            # 'intensity': 'intensity_reset',
-            # 'projection': 'projection_reset',
+            'y': 'y_reset',
+            'd': 'd_reset',
         }
     def update(self,*args,**kwargs):
         logger.info("update:{:}:{:}".format(args,kwargs))
@@ -406,6 +452,9 @@ class YoungDemo(ProxyObject,UpdateObject):
         self.zoom.register(self,'wl')
         self.normal.register(self,'p')
         self.zoom.register(self,'p')
+        self.normal.register(self,'y')
+        self.normal.register(self,'d')
+        self.zoom.register(self,'d')
         # Proxy setup
         self._proxy_children_set(self.normal)
         self._freeze()
