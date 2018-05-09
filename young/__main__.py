@@ -69,15 +69,14 @@ def get_demos():
     modules_folder = sep.join(prog_path_components[:-1]+[subfolder])
     res = dict()
     for _,name,_ in iter_modules([modules_folder]):
-        res[name] = lambda: import_module('.'.join(['',subfolder,name]),
-                package=prog_name)
+        res[name] = '.'.join(['',subfolder,name])
     return res
 
 def main():
     demos = get_demos()
     argv = parse_args(demos)
     set_verb(argv)
-    m = demos[argv.module]()
+    m = import_module(demos[argv.module],package=prog_name)
     m.logger.setLevel(get_dbg_level(argv.verb))
     logger.info("IMPORT:finished")
     m.run(argv.remainder)

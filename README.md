@@ -36,3 +36,10 @@ Then, as an example, run the `pyplot` demo. This is the interactive one.
 ```sh
 (interference) ~/interference λ python -m young pyplot
 ```
+
+The `beforeafter` demo saves two pics. One with the default parameters (before)
+and one after changing them to what you specify.
+
+```sh
+(interference) ~/interference λ python -m young beforeafter -w 650 -y 15 -d 3
+```
