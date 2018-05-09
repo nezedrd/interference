@@ -1,5 +1,5 @@
 from numpy import abs,linspace,square,ones,sqrt,cos,pi
-from .tools import log_test,get_extent,array_indexof,ProxyObject,UpdateObject
+from .tools import get_extent,array_indexof,ProxyObject,UpdateObject
 from .config import DisplayConfig,YoungConfig
 from logging import getLogger
 logger = getLogger(__name__)
@@ -220,7 +220,6 @@ class YoungInterference(ProxyObject,UpdateObject):
         res.append('  '+str(self.display_cfg).replace('\n','\n  '))
         return '\n'.join(res)
 
-# log_test(logger)
 if __name__=='__main__':
     yi = YoungInterference()
     print(yi)

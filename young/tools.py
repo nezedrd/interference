@@ -3,21 +3,8 @@ from functools import reduce
 from matplotlib.pyplot import get_cmap
 from matplotlib.colors import LinearSegmentedColormap
 from numpy import linspace,array,ones
-from logging import getLogger,ERROR,DEBUG
+from logging import getLogger
 logger = getLogger(__name__)
-logger.setLevel(ERROR)
-
-"""
-Test logger
-"""
-def log_test(l):
-    print("PRINT:{:}:Will test debug,info,warning,error,critical.".format(l.name))
-    l.debug("Test of debug")
-    l.info("Test of info")
-    l.warning("Test of warning")
-    l.error("Test of error")
-    l.critical("Test of critical")
-    print("PRINT:{:}:Tested debug,info,warning,error,critical.".format(l.name))
 
 """
 DefaultObject
@@ -217,7 +204,6 @@ def color_to_cmap(color):
     colors = color*smooth
     return LinearSegmentedColormap.from_list('colormap',colors)
 
-# log_test(logger)
 if __name__=='__main__':
     logger.setLevel(DEBUG)
     test_updateobject()

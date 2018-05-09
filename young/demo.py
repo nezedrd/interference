@@ -3,7 +3,7 @@ from matplotlib.pyplot import figure,subplot2grid,Circle
 from matplotlib.ticker import FuncFormatter
 from matplotlib.widgets import Slider
 from .interference import YoungInterference
-from .tools import log_test,kwargs_figure,ProxyObject,UpdateObject,wavelength_to_color,color_to_cmap,array_indexof,unit_identify
+from .tools import kwargs_figure,ProxyObject,UpdateObject,wavelength_to_color,color_to_cmap,array_indexof,unit_identify
 logger = getLogger(__name__)
 
 """
@@ -470,7 +470,6 @@ class YoungDemo(ProxyObject,UpdateObject):
         res.append('  (zoomed) '+str(self.zoom).replace('\n','\n  '))
         return '\n'.join(res)
 
-# log_test(logger)
 if __name__=='__main__':
     yd = YoungDemo()
     print(yd)

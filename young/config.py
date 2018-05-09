@@ -1,4 +1,4 @@
-from .tools import log_test,UpdateObject,unit_format
+from .tools import UpdateObject,unit_format
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -239,7 +239,6 @@ class DisplayConfig(UpdateObject):
         res.append("  y: [ {:}, {:} ] {:d}px".format(ym,yM,self.yres))
         return '\n'.join(res)
 
-# log_test(logger)
 if __name__ == '__main__':
     yc = YoungConfig()
     print(yc)

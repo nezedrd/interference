@@ -1,10 +1,13 @@
 from logging import basicConfig,getLogger,DEBUG,INFO,WARNING,ERROR,CRITICAL
 basicConfig(level=ERROR)
 DBG_LEVELS = [ CRITICAL,ERROR,WARNING,INFO,DEBUG ]
+DBG_DEFAULT = 2
+def get_dbg_level(i):
+    real_i = max(0,min(i+DBG_DEFAULT,len(DBG_LEVELS)-1))
+    return DBG_LEVELS[real_i]
 
 from os.path import sep
 from argparse import ArgumentParser,REMAINDER
-from .tools import log_test
 from importlib import import_module
 
 from .demo import logger as dlog
@@ -34,15 +37,15 @@ def parse_args():
 
 def set_verb(argv):
     for l in [logger,dlog,tlog,ilog,clog]:
-        l.setLevel(DBG_LEVELS[argv.verb])
+        l.setLevel(get_dbg_level(argv.verb))
     if argv.tools_verb >= 0:
-        tlog.setLevel(DBG_LEVELS[argv.tools_verb])
+        tlog.setLevel(get_dbg_level(argv.tools_verb))
     if argv.interference_verb >= 0:
-        ilog.setLevel(DBG_LEVELS[argv.interference_verb])
+        ilog.setLevel(get_dbg_level(argv.interference_verb))
     if argv.config_verb >= 0:
-        clog.setLevel(DBG_LEVELS[argv.config_verb])
+        clog.setLevel(get_dbg_level(argv.config_verb))
     if argv.demo_verb >= 0:
-        clog.setLevel(DBG_LEVELS[argv.demo_verb])
+        clog.setLevel(get_dbg_level(argv.demo_verb))
 
 def main():
     argv = parse_args()
