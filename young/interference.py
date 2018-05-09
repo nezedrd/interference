@@ -15,19 +15,25 @@ class YoungInterference(ProxyObject,UpdateObject):
     """
     @property
     def display_cfg(self):
+        self.__debug("get:display_cfg")
         return self.__display_cfg
     @display_cfg.setter
     def display_cfg(self,v):
         if self.__display_cfg is not None:
+            self.__error("set:display_cfg:AlreadySet")
             raise AttributeError
+        self.__debug("set:display_cfg:{:}",repr(v))
         self.__display_cfg = v
     @property
     def young_cfg(self):
+        self.__debug("get:young_cfg")
         return self.__young_cfg
     @young_cfg.setter
     def young_cfg(self,v):
         if self.__young_cfg is not None:
+            self.__error("set:young_cfg:AlreadySet")
             raise AttributeError
+        self.__debug("set:young_cfg:{:}",repr(v))
         self.__young_cfg = v
 
     """
@@ -35,8 +41,10 @@ class YoungInterference(ProxyObject,UpdateObject):
     """
     @property
     def xrange(self):
+        self.__debug("get:xrange")
         xr = self.__xr
         if xr is None:
+            self.__info("get:xrange:CacheMiss")
             xr = linspace(self.x_min,self.x_max,
                     num=self.xres,dtype=int)
             xr.setflags(write=0)
@@ -44,8 +52,10 @@ class YoungInterference(ProxyObject,UpdateObject):
         return xr
     @property
     def yrange(self):
+        self.__debug("get:yrange")
         yr = self.__yr
         if yr is None:
+            self.__info("get:yrange:CacheMiss")
             yr = linspace(self.y_min,self.y_max,
                     num=self.yres,dtype=int)
             yr.setflags(write=0)
@@ -57,8 +67,10 @@ class YoungInterference(ProxyObject,UpdateObject):
     """
     @property
     def dphase(self):
+        self.__debug("get:dphase")
         dp = self.__dp
         if dp is None:
+            self.__info("get:dphase:CacheMiss")
             # xr is a line, yr is a column
             xr_left = square(self.xrange+self.d).reshape(1,-1)
             xr_right = square(self.xrange-self.d).reshape(1,-1)
@@ -88,22 +100,28 @@ class YoungInterference(ProxyObject,UpdateObject):
     """
     @property
     def intensity(self):
+        self.__debug("get:intensity")
         s = self.__s
         if s is None:
+            self.__info("get:intensity:CacheMiss")
             s = 4*square(cos(pi*self.dphase/self.wl))
             s.setflags(write=0)
             self.__s = s
         return s
     def wl_reset(self):
+        self.__info("wl_reset")
         self.__s = None
         self.notify('wl')
     def p_reset(self):
+        self.__info("p_reset")
         self.__dp = None
         self.__s = None
         self.notify('p')
     def y_reset(self):
+        self.__info("y_reset")
         self.notify('y')
     def d_reset(self):
+        self.__info("d_reset")
         self.__dp = None
         self.__s = None
         self.notify('d')
@@ -113,6 +131,7 @@ class YoungInterference(ProxyObject,UpdateObject):
     get_intensity(left=..., right=..., b=..., t=...)
     """
     def get_intensity(self,*args,**kwargs):
+        self.__debug("get_intensity:{:}:{:}",list(args),kwargs)
         # Get parameters and data
         d = {
                 'left': self.x_min,
@@ -141,15 +160,18 @@ class YoungInterference(ProxyObject,UpdateObject):
     """
     @property
     def projection_phase(self):
+        self.__debug("get:projection_phase")
         d = self.dphase
         i = array_indexof(self.yrange,self.y)
         return d[i:i+1,:]
     @property
     def projection(self):
+        self.__debug("get:projection")
         s = self.intensity
         i = array_indexof(self.yrange,self.y)
         return s[i:i+1,:]
     def get_projection(self,*args,**kwargs):
+        self.__debug("get_projection:{:}:{:}",list(args),kwargs)
         # Get parameters and data
         d = {
                 'left': self.x_min,
@@ -181,12 +203,13 @@ class YoungInterference(ProxyObject,UpdateObject):
             'd': 'd_reset',
         }
     def update(self,*args,**kwargs):
-        logger.info("update:{:}:{:}".format(args,kwargs))
+        self.__debug("update:{:}:{:}",list(args),kwargs)
         for t in args:
             if t in self.__handlers:
                 getattr(self,self.__handlers[t])()
             else:
-                logger.error("update:{:}:NotImplemented".format(t))
+                self.__error("update({:}):NotImplemented",t)
+                raise NotImplementedError
 
     """
     Interference part needs no initialization
@@ -219,6 +242,22 @@ class YoungInterference(ProxyObject,UpdateObject):
         res.append('  '+str(self.young_cfg).replace('\n','\n  '))
         res.append('  '+str(self.display_cfg).replace('\n','\n  '))
         return '\n'.join(res)
+
+    def __debug(self,msg,*args,**kwargs):
+        logger.debug("YoungInterference[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __info(self,msg,*args,**kwargs):
+        logger.info("YoungInterference[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __warning(self,msg,*args,**kwargs):
+        logger.warning("YoungInterference[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __error(self,msg,*args,**kwargs):
+        logger.error("YoungInterference[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __critical(self,msg,*args,**kwargs):
+        logger.critical("YoungInterference[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
 
 if __name__=='__main__':
     yi = YoungInterference()

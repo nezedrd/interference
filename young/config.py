@@ -26,63 +26,81 @@ class YoungConfig(UpdateObject):
     # Wavelength
     @property
     def wl_min(self):
+        self.__debug("get:wl_min")
         return self.__wlm
     @wl_min.setter
     def wl_min(self,v):
+        self.__debug("set:wl_min:{:}",v)
         self.__wlm = int(max(350,v))
     @property
     def wl_max(self):
+        self.__debug("get:wl_max")
         return self.__wlM
     @wl_max.setter
     def wl_max(self,v):
+        self.__debug("set:wl_max:{:}",v)
         self.__wlM = int(min(v,750))
     @property
     def wl(self):
+        self.__debug("get:wl")
         return self.__wl
     @wl.setter
     def wl(self,v):
+        self.__debug("set:wl:{:}",v)
         self.__wl = int(max(self.wl_min,min(v,self.wl_max)))
         self.notify('wl')
 
     # Intersource distance
     @property
     def d_min(self):
+        self.__debug("get:d_min")
         return self.__dm
     @d_min.setter
     def d_min(self,v):
+        self.__debug("set:d_min:{:}",v)
         self.__dm = int(max(0,v))
     @property
     def d_max(self):
+        self.__debug("get:d_max")
         return self.__dM
     @d_max.setter
     def d_max(self,v):
+        self.__debug("set:d_max:{:}",v)
         self.__dM = int(v)
     @property
     def d(self):
+        self.__debug("get:d")
         return self.__d
     @d.setter
     def d(self,v):
+        self.__debug("set:d:{:}",v)
         self.__d = int(max(self.d_min,min(v,self.d_max)))
         self.notify('d')
 
     # Phase delay
     @property
     def p_min(self):
+        self.__debug("get:p_min")
         return self.__pm
     @p_min.setter
     def p_min(self,v):
+        self.__debug("set:p_min:{:}",v)
         self.__pm = int(v)
     @property
     def p_max(self):
+        self.__debug("get:p_max")
         return self.__pM
     @p_max.setter
     def p_max(self,v):
+        self.__debug("set:p_max:{:}",v)
         self.__pM = int(v)
     @property
     def p(self):
+        self.__debug("get:p")
         return self.__p
     @p.setter
     def p(self,v):
+        self.__debug("set:p:{:}",v)
         self.__p = int(max(self.p_min,min(v,self.p_max)))
         self.notify('p')
 
@@ -119,6 +137,23 @@ class YoungConfig(UpdateObject):
         pm, p, pM,  = unit_format(self.p_min, self.p, self.p_max )
         res.append("  p: {:} --- {:} --> {:}".format(pm, p, pM ))
         return '\n'.join(res)
+
+    def __debug(self,msg,*args,**kwargs):
+        logger.debug("YoungConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __info(self,msg,*args,**kwargs):
+        logger.info("YoungConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __warning(self,msg,*args,**kwargs):
+        logger.warning("YoungConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __error(self,msg,*args,**kwargs):
+        logger.error("YoungConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __critical(self,msg,*args,**kwargs):
+        logger.critical("YoungConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+
 """
 Graphical configuration
 """
@@ -141,67 +176,86 @@ class DisplayConfig(UpdateObject):
     # Graphical bounds
     @property
     def x_min(self):
+        self.__debug("get:x_min")
         return self.__xm
     @x_min.setter
     def x_min(self,v):
+        self.__debug("set:x_min:{:}",v)
         self.__xm = int(v)
     @property
     def x_max(self):
+        self.__debug("get:x_max")
         return self.__xM
     @x_max.setter
     def x_max(self,v):
+        self.__debug("set:x_max:{:}",v)
         self.__xM = int(v)
     @property
     def x(self):
+        self.__debug("get:x")
         return self.__x
     @x.setter
     def x(self,v):
+        self.__debug("set:x:{:}",v)
         self.__x = int(max(self.x_min,min(v,self.x_max)))
     @property
     def x_ratio(self):
+        self.__debug("get:x_ratio")
         return self.__xr
     @x_ratio.setter
     def x_ratio(self,v):
+        self.__debug("set:x_ratio:{:}",v)
         self.__xr = int(max(1,v))
     @property
     def y_min(self):
+        self.__debug("get:y_min")
         return self.__ym
     @y_min.setter
     def y_min(self,v):
+        self.__debug("set:y_min:{:}",v)
         self.__ym = int(v)
     @property
     def y_max(self):
+        self.__debug("get:y_max")
         return self.__yM
     @y_max.setter
     def y_max(self,v):
+        self.__debug("set:y_max:{:}",v)
         self.__yM = int(v)
     @property
     def y(self):
+        self.__debug("get:y")
         return self.__y
     @y.setter
     def y(self,v):
-        logger.debug("y.setter:{:}".format(v))
+        self.__debug("set:y:{:}",v)
         self.__y = int(max(self.y_min,min(v,self.y_max)))
         self.notify('y')
     @property
     def y_screen(self):
+        self.__debug("get:y_screen")
         return self.__ys
     @y_screen.setter
     def y_screen(self,v):
+        self.__debug("set:y_screen:{:}",v)
         self.__ys = int(max(1,v))
 
     # Resolution
     @property
     def res(self):
+        self.__debug("get:res")
         return self.__r
     @res.setter
     def res(self,v):
+        self.__debug("set:res:{:}",v)
         self.__r = int(max(0,v))
     @property
     def xres(self):
+        self.__debug("get:xres")
         return self.res
     @property
     def yres(self):
+        self.__debug("get:yres")
         Δy = self.y_max - self.y_min
         Δx = self.x_max - self.x_min
         ρx = self.xres
@@ -238,6 +292,22 @@ class DisplayConfig(UpdateObject):
         ym, yM,     = unit_format(self.y_min, self.y_max)
         res.append("  y: [ {:}, {:} ] {:d}px".format(ym,yM,self.yres))
         return '\n'.join(res)
+
+    def __debug(self,msg,*args,**kwargs):
+        logger.debug("DisplayConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __info(self,msg,*args,**kwargs):
+        logger.info("DisplayConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __warning(self,msg,*args,**kwargs):
+        logger.warning("DisplayConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __error(self,msg,*args,**kwargs):
+        logger.error("DisplayConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
+    def __critical(self,msg,*args,**kwargs):
+        logger.critical("DisplayConfig[{:}]:{:}"\
+                .format(repr(self),msg.format(*args,**kwargs)))
 
 if __name__ == '__main__':
     yc = YoungConfig()
