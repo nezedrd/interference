@@ -1,13 +1,38 @@
 # The project
 
-See [the blog post](https://nezedrd.github.io/python/interference/2018/04/20/interference-project.html).
+Explaining blog posts:
+* [Project description][blog1]
+* [Math][blog2]
+* [First rendering][blog3]
+
+[blog1]: https://nezedrd.github.io/python/interference/2018/04/20/interference-project.html
+[blog2]: https://nezedrd.github.io/python/interference/2018/04/27/interference-math.html
+[blog3]: https://nezedrd.github.io/python/interference/2018/05/01/interference-rendering.html
 
 # Workplace setup
 
-With [virtualenv](https://virtualenv.pypa.io/en/stable/installation/) and [virtualenvwrapper](http://virtualenvwrapper.readthedocs.io/en/latest/install.html).
+With [virtualenv][ve] and [virtualenvwrapper][vew].
 
 ```sh
-λ cd path/to/project
-λ mkvirtualenv -a $PWD --python=python3 project
-λ pip install -r requirements.txt
+~ λ PROJECT_NAME="interference"
+~ λ PROJECT_PATH="/home/nezedrd/$PROJECT_NAME"
+~ λ mkvirtualenv -a "$PROJECT_PATH" -p python3 "$PROJECT_NAME"
+(interference) ~/interference λ pip install -r requirements.txt
+```
+
+[ve]:  https://virtualenv.pypa.io/en/stable/installation/
+[vew]: http://virtualenvwrapper.readthedocs.io/en/latest/install.html
+
+# Running a demo
+
+You can show the main help, first.
+
+```sh
+(interference) ~/interference λ python -m young -h
+```
+
+Then, as an example, run the `pyplot` demo. This is the interactive one.
+
+```sh
+(interference) ~/interference λ python -m young pyplot
 ```
