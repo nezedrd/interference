@@ -332,6 +332,8 @@ class YoungDemo(ProxyObject,UpdateObject):
                     'interpolation': 'nearest',
                     'cmap': self.cmap,
                     'origin': 'lower',
+                    'vmin': 0,
+                    'vmax': 4,
                 }
             self.__imcfg = c
         return c
@@ -373,9 +375,13 @@ class YoungDemo(ProxyObject,UpdateObject):
         r = int(self.x_max/self.x_ratio)
         # Get and draw space
         im,ex = self.get_intensity(left=l,right=r)
+        self.__info("draw_axc:intensity:min({:}):max({:})",im.min(),im.max())
+        self.__info("draw_axc:im_cfg:{:}",self.im_cfg)
         axc.imshow(im,extent=ex,**self.im_cfg)
         # Get and draw screen
         im,ex = self.get_projection(left=l,right=r)
+        self.__info("draw_axc:projection:min({:}):max({:})",im.min(),im.max())
+        self.__info("draw_axc:im_cfg:{:}",self.im_cfg)
         axc.imshow(im,extent=ex,**self.im_cfg)
         # Draw source points
         sl,sr = self.normal_srcs
@@ -391,6 +397,8 @@ class YoungDemo(ProxyObject,UpdateObject):
         axs.cla()
         # Get and draw screen
         im,ex = self.get_projection(left=self.x_min,right=self.x_max)
+        self.__info("draw_axs:projection:min({:}):max({:})",im.min(),im.max())
+        self.__info("draw_axc:im_cfg:{:}",self.im_cfg)
         axs.imshow(im,extent=ex,**self.im_cfg)
         # Draw nice middle fringe line
         axs.axvline(self.x_mid,color='w',linestyle='--')
@@ -403,6 +411,8 @@ class YoungDemo(ProxyObject,UpdateObject):
         axz.cla()
         # Get and draw space
         im,ex = self.zoom.get_intensity()
+        self.__info("draw_axz:intensity:min({:}):max({:})",im.min(),im.max())
+        self.__info("draw_axc:im_cfg:{:}",self.im_cfg)
         axz.imshow(im,extent=ex,**self.im_cfg)
         # Draw source points
         sl,sr = self.zoom_srcs
@@ -488,7 +498,8 @@ class YoungDemo(ProxyObject,UpdateObject):
         YoungDemo.__id += 1
         self.__id = YoungDemo.__id
         # Child configurations
-        self.normal = YoungInterference(**kwargs)
+        YIFC=kwargs.pop('young_if_class',YoungInterference)
+        self.normal = YIFC(**kwargs)
         ycfg = self.normal.young_cfg
         zdcfg = self.normal.display_cfg.copy()
         zboxratio = kwargs.get('zboxratio',9/16)
@@ -496,7 +507,7 @@ class YoungDemo(ProxyObject,UpdateObject):
         zdcfg.y_max = zboxratio*zdcfg.x_max
         zdcfg.x_min = -zdcfg.x_max
         zdcfg.y_min = -zdcfg.y_max
-        self.zoom = YoungInterference(young_cfg=ycfg,display_cfg=zdcfg)
+        self.zoom = YIFC(young_cfg=ycfg,display_cfg=zdcfg)
         # Build configuration
         config = YoungDemo.DEFAULT.copy()
         config.update(kwargs)

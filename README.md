@@ -4,10 +4,12 @@ Explaining blog posts:
 * [Project description][blog1]
 * [Math][blog2]
 * [First rendering][blog3]
+* [Video demonstration][blog4]
 
 [blog1]: https://nezedrd.github.io/python/interference/2018/04/20/interference-project.html
 [blog2]: https://nezedrd.github.io/python/interference/2018/04/27/interference-math.html
 [blog3]: https://nezedrd.github.io/python/interference/2018/05/01/interference-rendering.html
+[blog4]: https://nezedrd.github.io/python/interference/2018/05/10/interference-demo.html
 
 # Workplace setup
 
@@ -42,4 +44,11 @@ and one after changing them to what you specify.
 
 ```sh
 (interference) ~/interference λ python -m young beforeafter -w 650 -y 15 -d 3
+```
+
+The `movie` demo saves a video. You can look in the `demos/movie.py` code if
+you want to change.
+
+```sh
+(interference) ~/interference λ python -m young movie -q lld -o video.mp4
 ```

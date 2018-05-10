@@ -8,11 +8,13 @@ Experiment configuration
 class YoungConfig(UpdateObject):
     __id = 0
     ATTRIBUTES = ['wl_min','wl_max','wl',\
-            'd_min','d_max','d','p_min','p_max','p']
+            'd_min','d_max','d','p_min','p_max','p',\
+            'R']
     DEFAULT = {
             'wl_min': 400, 'wl_max': 700, 'wl': 532,
             'd_min': 0, 'd_max': 20e3, 'd': 10e3,
             'p_min': -700, 'p_max': 700, 'p': 0,
+            'R': 960, # value in air and nanometers: R=0.96*1e30*λ^4/m^3
         }
 
     """
@@ -103,6 +105,15 @@ class YoungConfig(UpdateObject):
         self.__debug("set:p:{:}",v)
         self.__p = int(max(self.p_min,min(v,self.p_max)))
         self.notify('p')
+
+    @property
+    def R(self):
+        self.__debug("get:R")
+        return (self.__wl)**4 * (self.__R)
+    @R.setter
+    def R(self,v):
+        self.__debug("set:R:{:}",v)
+        self.__R = v
 
     """
     Initialize configuration
