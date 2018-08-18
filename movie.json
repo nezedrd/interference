@@ -1,0 +1,46 @@
+{
+  "title": "My video",
+  "author": "Clement",
+  "comment": "Something...",
+  "quality": "hhd",
+  "fps": 15,
+  "init": {
+    "wl": 400,
+    "y": 30,
+    "d": 20,
+    "p": 0
+  },
+  "steps": [
+    {
+      "var": "wl",
+      "sec": 10,
+      "end": 532
+    },
+    {
+      "var": "d",
+      "sec": 20,
+      "end": 5
+    },
+    {
+      "var": "y",
+      "end": 3.5
+    },
+    {
+      "sec": 5,
+      "end": 20
+    },
+    {
+      "var": "p",
+      "sec": 20,
+      "end": 620
+    },
+    {
+      "var": "wl",
+      "end": 680
+    },
+    {
+      "sec": 40,
+      "end": 400
+    }
+  ]
+}
